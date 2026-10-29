@@ -5,10 +5,10 @@ import { useStore, type User } from '../data/store'
 
 export default function Login() {
   const { signIn, users, user } = useStore()
-  const DEMO_USERS = users.filter((u) => u.status === 'Active')
+  const active = users.filter((u) => u.status === 'Active')
   const nav = useNavigate()
   const loc = useLocation() as { state?: { from?: string } }
-  const [email, setEmail] = useState(DEMO_USERS[0].email)
+  const [email, setEmail] = useState('chairman@gsy.example')
   const [password, setPassword] = useState('••••••••••')
   const [step, setStep] = useState<'creds' | 'otp'>('creds')
   const [otp, setOtp] = useState('')
@@ -19,7 +19,7 @@ export default function Login() {
 
   const submitCreds = (e: FormEvent) => {
     e.preventDefault()
-    const u = DEMO_USERS.find((x) => x.email.toLowerCase() === email.trim().toLowerCase())
+    const u = active.find((x) => x.email.toLowerCase() === email.trim().toLowerCase())
     if (!u || !password) return setErr('Unknown or disabled account. Only named GSY users can sign in.')
     setErr('')
     setPending(u)
@@ -71,16 +71,7 @@ export default function Login() {
               </Field>
               {err && <p className="text-sm text-bad">{err}</p>}
               <button type="submit" className="h-11 rounded-xl bg-navy-900 font-medium text-white hover:bg-navy-800">Continue</button>
-              <div className="rounded-xl border border-dashed border-gold-500/50 bg-gold-50 p-3 text-xs text-ink-2">
-                <div className="mb-1.5 font-semibold text-gold-600">Layout preview: choose a role</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {DEMO_USERS.map((u) => (
-                    <button type="button" key={u.id} onClick={() => setEmail(u.email)} className={`rounded-full border px-2.5 py-1 ${email === u.email ? 'border-navy-900 bg-navy-900 text-white' : 'border-line bg-white hover:border-gold-500'}`}>
-                      {u.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <p className="text-center text-[0.6875rem] text-muted">Preview sign-in: <b className="text-ink-2">chairman@gsy.example</b> (any password)</p>
             </form>
           ) : (
             <form onSubmit={submitOtp} className="mt-6 flex flex-col gap-4">

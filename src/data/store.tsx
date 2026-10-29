@@ -6,8 +6,9 @@ import type { CountryCode, Dataset } from './types'
 
 // ---------------------------------------------------------------- users & permissions
 
-export type Role = 'Chairman' | 'Vice Chairman' | 'Managing Director' | 'Country Head' | 'Accounts' | 'Administrator' | 'Viewer'
-export const ROLES: Role[] = ['Chairman', 'Vice Chairman', 'Managing Director', 'Country Head', 'Accounts', 'Administrator', 'Viewer']
+/** Role names are free text: the Chairman creates them (e.g. "Sub Vice Chairman"). */
+export type Role = string
+export const CHAIRMAN: Role = 'Chairman'
 
 export type Permission =
   | 'viewDashboards' | 'viewInvestors' | 'viewCommissions' | 'downloadStatements' | 'useAI'
@@ -24,16 +25,17 @@ export const PERMISSIONS: { id: Permission; label: string; hint: string }[] = [
   { id: 'reviewData', label: 'Review data issues', hint: 'Fix mismatches, duplicates' },
   { id: 'manageUsers', label: 'Manage users & access', hint: 'Create users, set roles and permissions' },
 ]
+export const ALL_PERMISSIONS = PERMISSIONS.map((p) => p.id)
 
-const ALL = PERMISSIONS.map((p) => p.id)
-export const ROLE_DEFAULTS: Record<Role, Permission[]> = {
-  Chairman: ALL,
-  'Vice Chairman': ['viewDashboards', 'viewInvestors', 'viewCommissions', 'downloadStatements', 'useAI', 'exportData'],
-  'Managing Director': ['viewDashboards', 'viewInvestors', 'viewCommissions', 'downloadStatements', 'useAI', 'exportData'],
-  'Country Head': ['viewDashboards', 'viewInvestors', 'useAI'],
-  Accounts: ['viewDashboards', 'viewInvestors', 'viewCommissions', 'downloadStatements', 'exportData', 'uploadData', 'reviewData'],
-  Administrator: ['uploadData', 'reviewData', 'manageUsers'],
-  Viewer: ['viewDashboards'],
+/** A role is a named set of permissions the Chairman defines. Users get the role's permissions. */
+export interface RoleDef {
+  id: string
+  name: Role
+  description: string
+  permissions: Permission[]
+  countries: CountryCode[] // default country limit for people given this role; empty = all
+  createdBy: string
+  createdAt: string
 }
 
 export interface User {
@@ -52,17 +54,13 @@ export interface User {
 
 export interface AuditEntry { at: string; by: string; action: string }
 
+// The system starts with only the Chairman. Everyone else, and every other role, is created by him.
 const SEED_USERS: User[] = [
-  { id: 'U1', name: 'Chairman', email: 'chairman@gsy.example', role: 'Chairman', permissions: ROLE_DEFAULTS.Chairman, countries: [], status: 'Active', twoStep: true, createdBy: 'System', createdAt: '2026-10-28', lastSignIn: null },
-  { id: 'U2', name: 'Vice Chairman', email: 'vice.chairman@gsy.example', role: 'Vice Chairman', permissions: ROLE_DEFAULTS['Vice Chairman'], countries: [], status: 'Active', twoStep: true, createdBy: 'Chairman', createdAt: '2026-10-28', lastSignIn: null },
-  { id: 'U3', name: 'Managing Director', email: 'md@gsy.example', role: 'Managing Director', permissions: ROLE_DEFAULTS['Managing Director'], countries: [], status: 'Active', twoStep: true, createdBy: 'Chairman', createdAt: '2026-10-28', lastSignIn: null },
-  { id: 'U4', name: 'India Head', email: 'india.head@gsy.example', role: 'Country Head', permissions: ROLE_DEFAULTS['Country Head'], countries: ['IN'], status: 'Active', twoStep: true, createdBy: 'Chairman', createdAt: '2026-10-29', lastSignIn: null },
-  { id: 'U5', name: 'Accounts Team', email: 'accounts@gsy.example', role: 'Accounts', permissions: ROLE_DEFAULTS.Accounts, countries: [], status: 'Active', twoStep: true, createdBy: 'Chairman', createdAt: '2026-10-28', lastSignIn: null },
-  { id: 'U6', name: 'System Admin', email: 'admin@gsy.example', role: 'Administrator', permissions: ROLE_DEFAULTS.Administrator, countries: [], status: 'Active', twoStep: true, createdBy: 'Chairman', createdAt: '2026-10-28', lastSignIn: null },
+  { id: 'U1', name: 'Chairman', email: 'chairman@gsy.example', role: CHAIRMAN, permissions: ALL_PERMISSIONS, countries: [], status: 'Active', twoStep: true, createdBy: 'System', createdAt: '2026-10-28', lastSignIn: null },
 ]
 
 /** The Chairman always has every permission; nobody can take it away. */
-export const can = (u: User | null | undefined, p: Permission) => !!u && (u.role === 'Chairman' || u.permissions.includes(p))
+export const can = (u: User | null | undefined, p: Permission) => !!u && (u.role === CHAIRMAN || u.permissions.includes(p))
 
 // ---------------------------------------------------------------- saved views
 
@@ -106,11 +104,14 @@ interface Store {
   ctx: Ctx
   user: User | null
   users: User[]
+  roles: RoleDef[]
   audit: AuditEntry[]
   signIn: (u: User) => void
   signOut: () => void
   upsertUser: (u: User) => void
   removeUser: (id: string) => void
+  upsertRole: (r: RoleDef) => void
+  removeRole: (id: string) => string | null
 }
 
 const StoreCtx = createContext<Store | null>(null)
@@ -123,8 +124,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const today = useMemo(() => todayISO(), [])
   const ds = useMemo(() => generateSampleData(today), [today])
   const [filters, setF] = useState<Filters>(() => emptyFilters(monthKey(today)))
-  const [users, setUsers] = useState<User[]>(() => load('gsy.users', SEED_USERS))
-  const [audit, setAudit] = useState<AuditEntry[]>(() => load('gsy.audit', []))
+  const [users, setUsers] = useState<User[]>(() => load('gsy.users.v2', SEED_USERS))
+  const [roles, setRoles] = useState<RoleDef[]>(() => load('gsy.roles.v1', []))
+  const [audit, setAudit] = useState<AuditEntry[]>(() => load('gsy.audit.v2', []))
   const [views, setViews] = useState<SavedView[]>(() => load('gsy.views', []))
   const [sessionId, setSessionId] = useState<string | null>(loadSession)
   const user = users.find((u) => u.id === sessionId && u.status === 'Active') ?? null
@@ -140,18 +142,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const log = (action: string) => {
     const next = [{ at: new Date().toISOString(), by: user?.name ?? 'System', action }, ...audit].slice(0, 200)
     setAudit(next)
-    save('gsy.audit', next)
+    save('gsy.audit.v2', next)
   }
   const persistUsers = (next: User[]) => {
     setUsers(next)
-    save('gsy.users', next)
+    save('gsy.users.v2', next)
+  }
+  const persistRoles = (next: RoleDef[]) => {
+    setRoles(next)
+    save('gsy.roles.v1', next)
   }
 
   const f = filters
   const activeFilterCount = f.companyIds.length + f.countries.length + f.productIds.length + f.currencies.length + f.salesIds.length + f.segments.length + f.states.length + (f.month !== monthKey(today) ? 1 : 0)
 
   const store: Store = {
-    ds, today, filters: effective, ctx, user, users, audit, views, activeFilterCount,
+    ds, today, filters: effective, ctx, user, users, roles, audit, views, activeFilterCount,
     setFilters: (p) => setF((prev) => ({ ...prev, ...p })),
     toggleFilter: (k, v) =>
       setF((prev) => {
@@ -185,9 +191,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
     removeUser: (id) => {
       const u = users.find((x) => x.id === id)
-      if (!u || u.role === 'Chairman') return
+      if (!u || u.role === CHAIRMAN) return
       persistUsers(users.filter((x) => x.id !== id))
       log(`Removed user ${u.name}`)
+    },
+    upsertRole: (r) => {
+      const prev = roles.find((x) => x.id === r.id)
+      persistRoles(prev ? roles.map((x) => (x.id === r.id ? r : x)) : [...roles, r])
+      // Everyone holding the role follows its permissions (and its name if renamed).
+      if (prev) persistUsers(users.map((u) => (u.role === prev.name ? { ...u, role: r.name, permissions: r.permissions } : u)))
+      log(prev ? `Updated role ${r.name} (${r.permissions.length} permissions)` : `Created role ${r.name} (${r.permissions.length} permissions)`)
+    },
+    removeRole: (id) => {
+      const r = roles.find((x) => x.id === id)
+      if (!r) return null
+      const holders = users.filter((u) => u.role === r.name)
+      if (holders.length) return `${holders.length} user(s) still have the role ${r.name}. Move them to another role first.`
+      persistRoles(roles.filter((x) => x.id !== id))
+      log(`Deleted role ${r.name}`)
+      return null
     },
   }
   return <StoreCtx.Provider value={store}>{children}</StoreCtx.Provider>
