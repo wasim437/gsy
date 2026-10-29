@@ -74,9 +74,9 @@ export default function SalesPerformance() {
           <Legend items={sel.map((p) => ({ label: p.sp.name, color: SERIES[picked.indexOf(p.sp.id)] }))} />
           <div className="h-72">
             <ResponsiveContainer>
-              <RadarChart data={radar} outerRadius="72%">
+              <RadarChart data={radar} outerRadius="62%" margin={{ left: 28, right: 28, top: 8, bottom: 8 }}>
                 <PolarGrid stroke={C.grid} />
-                <PolarAngleAxis dataKey="metric" tick={{ fontSize: 11, fill: '#3f4a5e' }} />
+                <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: '#3f4a5e' }} />
                 <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
                 <Tooltip content={({ active, payload, label }) => active && payload?.length ? (
                   <div className="rounded-xl border border-line bg-white px-3 py-2 text-xs shadow-lg"><b>{label}</b>{payload.map((x) => <div key={String(x.dataKey)} className="num">{ctx.salesById.get(String(x.dataKey))?.name}: {x.value}/100</div>)}</div>
@@ -116,7 +116,8 @@ export default function SalesPerformance() {
       </div>
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-5">
-        <Card className="xl:col-span-3" title="Money raised: salesperson × month" subtitle="AED · last 6 months · spot who is consistent and who has gone quiet" action={<SeqLegend label="" min="less" max="more" />}>
+        <Card className="xl:col-span-3" title="Money raised: salesperson × month" subtitle="AED · last 6 months · spot who is consistent and who has gone quiet">
+          <div className="mb-2"><SeqLegend label="" min="less" max="more" /></div>
           <Heatmap
             cols={months.map((m) => monthLabel(m))}
             rows={heat.map((r) => ({ label: <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: ENTITY_COLOR[r.sp.country] }} />{r.sp.name}</span>, cells: r.cells }))}

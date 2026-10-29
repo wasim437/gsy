@@ -26,7 +26,9 @@ export default function MoneyFlow() {
 
       <Card title="Capital flow (Sankey)" subtitle="Band width = active capital in AED · hover a band for the amount">
         <Legend items={[...ds.countries.map((c) => ({ label: c.name, color: ENTITY_COLOR[c.code] })), { label: 'Companies / products', color: '#22395c' }]} />
-        <div className="h-[420px]">
+        <p className="mb-2 text-[0.6875rem] text-gold-600 sm:hidden">Swipe sideways to see the full chart →</p>
+        <div className="scroll-thin -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <div className="h-[420px] min-w-[680px] lg:min-w-0">
           <ResponsiveContainer>
             <Sankey
               data={flow}
@@ -44,6 +46,7 @@ export default function MoneyFlow() {
               }} />
             </Sankey>
           </ResponsiveContainer>
+        </div>
         </div>
       </Card>
 
@@ -141,8 +144,8 @@ function Decomposition() {
           </select>
         ))}
       </div>
-      <div className="scroll-thin flex gap-3 overflow-x-auto pb-2">
-        <div className="w-36 shrink-0">
+      <div className="scroll-thin flex flex-col gap-3 pb-2 sm:flex-row sm:overflow-x-auto">
+        <div className="w-full sm:w-36 sm:shrink-0">
           <div className="mb-2 text-[0.625rem] font-semibold tracking-wider text-muted uppercase">Total</div>
           <div className="rounded-xl bg-navy-900 p-3 text-white">
             <div className="text-[0.6875rem] text-white/60">Active capital</div>
@@ -153,11 +156,11 @@ function Decomposition() {
         {levels.map((lv, i) => {
           const max = lv.items[0]?.value || 1
           return (
-            <div key={i} className="flex w-48 shrink-0 items-start gap-2">
-              <ChevronRight size={16} className="mt-8 shrink-0 text-muted" />
+            <div key={i} className="flex w-full items-start gap-2 sm:w-48 sm:shrink-0">
+              <ChevronRight size={16} className="mt-8 hidden shrink-0 text-muted sm:block" />
               <div className="min-w-0 flex-1">
                 <div className="mb-2 text-[0.625rem] font-semibold tracking-wider text-muted uppercase">{DIMS.find((d) => d.id === lv.dim)?.label}</div>
-                <div className="flex max-h-80 flex-col gap-1.5 overflow-y-auto pr-1">
+                <div className="grid max-h-80 grid-cols-2 gap-1.5 overflow-y-auto pr-1 sm:flex sm:flex-col">
                   {lv.items.map((it, j) => {
                     const selected = path[i] === it.key
                     return (

@@ -126,7 +126,8 @@ function PayoutCalendar() {
   const busiest = [...due.entries()].filter(([d]) => d > ctx.ref).sort((a, b) => b[1].due - a[1].due).slice(0, 5)
 
   return (
-    <Card title="Payout calendar" subtitle="Each square is one day; darker = more money due. Red outline = still unpaid after the due date." action={<SeqLegend label="AED due" max={compact(max, 1)} />}>
+    <Card title="Payout calendar" subtitle="Each square is one day; darker = more money due. Red outline = still unpaid after the due date.">
+      <div className="mb-3"><SeqLegend label="AED due" max={compact(max, 1)} /></div>
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_260px]">
         <div className="scroll-thin overflow-x-auto">
           <div className="inline-flex gap-[3px]">

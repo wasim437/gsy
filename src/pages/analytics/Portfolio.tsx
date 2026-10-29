@@ -92,13 +92,14 @@ export default function Portfolio() {
       </div>
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-5">
-        <Card className="xl:col-span-3" title="Investment vintage" subtitle="Capital raised per month × product (AED)" action={<SeqLegend label="" max="more" min="less" />}>
-          <Heatmap cols={ds.products.map((p) => p.name)} rows={vin.map((v) => ({ label: monthLabel(v.month, 'long'), cells: v.cells }))} />
+        <Card className="xl:col-span-3" title="Investment vintage" subtitle="Capital raised per month × product (AED)">
+          <div className="mb-2"><SeqLegend label="" max="more" min="less" /></div>
+          <Heatmap cols={ds.products.map((p) => p.name)} rows={vin.map((v) => ({ label: monthLabel(v.month), cells: v.cells }))} />
         </Card>
         <Card className="xl:col-span-2" title="Payout punctuality" subtitle="% of payouts paid within 2 days of the due date">
           <Heatmap
             cols={ds.companies.filter((c) => c.type === 'Investment Co').map((c) => c.name.replace('Investment ', ''))}
-            rows={punct.map((v) => ({ label: monthLabel(v.month, 'long'), cells: v.cells.map((x) => (x === null ? null : x)) }))}
+            rows={punct.map((v) => ({ label: monthLabel(v.month), cells: v.cells }))}
             max={1}
             fmt={(v) => `${Math.round(v * 100)}%`}
           />
@@ -131,13 +132,14 @@ function MaturityTimeline() {
       </div>
     }>
       <Legend items={ctx.ds.products.map((p) => ({ label: p.name, color: ENTITY_COLOR[p.id] }))} />
-      <div className="scroll-thin overflow-x-auto">
-        <div className="min-w-[720px]">
-          <div className="relative ml-44 h-5 border-b border-line text-[0.625rem] text-muted">
+      <p className="mb-2 text-[0.6875rem] text-gold-600 sm:hidden">Swipe sideways to see the full chart →</p>
+      <div className="scroll-thin overflow-x-auto [--nc:7.5rem] sm:[--nc:11rem]">
+        <div className="min-w-[640px] sm:min-w-[720px]">
+          <div className="relative ml-[var(--nc)] h-5 border-b border-line text-[0.625rem] text-muted">
             {ticks.map((t) => x(t) >= 0 && x(t) <= 100 && <span key={t} className="absolute -translate-x-1/2" style={{ left: `${x(t)}%` }}>{monthLabel(t.slice(0, 7))}</span>)}
           </div>
           <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 z-10 w-px bg-navy-900" style={{ left: `calc(11rem + (100% - 11rem) * ${x(ctx.ref) / 100})` }}>
+            <div className="pointer-events-none absolute inset-y-0 z-10 w-px bg-navy-900" style={{ left: `calc(var(--nc) + (100% - var(--nc)) * ${x(ctx.ref) / 100})` }}>
               <span className="absolute -top-0.5 left-1 rounded bg-navy-900 px-1 text-[0.5625rem] text-white">Today</span>
             </div>
             {rows.map((c) => {
@@ -145,8 +147,8 @@ function MaturityTimeline() {
               const soon = daysBetween(ctx.ref, c.endDate) <= 90
               return (
                 <div key={c.id} className="group flex h-7 items-center">
-                  <Link to={`/investors/${inv.id}`} className="w-44 shrink-0 truncate pr-3 text-xs hover:text-gold-600">
-                    <span className="font-medium">{inv.fullName}</span> <span className="text-muted">{c.id}</span>
+                  <Link to={`/investors/${inv.id}`} className="w-[var(--nc)] shrink-0 truncate pr-3 text-xs hover:text-gold-600">
+                    <span className="font-medium">{inv.fullName}</span> <span className="hidden text-muted sm:inline">{c.id}</span>
                   </Link>
                   <div className="relative h-full flex-1 border-l border-line-2">
                     {ticks.map((t) => <div key={t} className="absolute inset-y-0 w-px bg-line-2" style={{ left: `${x(t)}%` }} />)}
