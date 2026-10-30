@@ -34,6 +34,9 @@ export default function DataSources() {
         title="Data Sources & Checks"
         subtitle="Where every figure comes from, when it was last updated, and what needs fixing in the source Excel files"
         actions={<>
+          <a href="/templates/GSY_Data_Template.xlsx" download className="inline-flex items-center gap-1.5 rounded-xl bg-gold-500 px-3.5 py-2 text-sm font-semibold text-navy-950 transition hover:bg-gold-400">
+            <FileSpreadsheet size={15} /> Excel template
+          </a>
           {canEdit && <Btn variant="ghost" icon={<Upload size={15} />}>Upload Excel</Btn>}
           {canEdit && <Btn variant="ghost" icon={<RefreshCw size={15} />}>Sync now</Btn>}
           {can(user, 'exportData') && <Btn icon={<Download size={15} />} onClick={() => TABLES.forEach(([n, k], i) => setTimeout(() => downloadCSV(n, ds[k] as object[]), i * 250))}>Export all data</Btn>}
