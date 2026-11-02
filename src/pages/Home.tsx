@@ -58,7 +58,7 @@ export default function Home() {
           Payouts due this month are <b className="text-white">AED {compact(k.dueMonth.aed, 2)}</b>, and <b className="text-white">{pct(paidRatio, 0)}</b> is already paid.
           {k.overdueRows.length > 0 && <> <b className="text-gold-400">{k.overdueRows.length} payments are overdue</b> (AED {compact(k.overdue.aed, 2)}).</>}{' '}
           Company commission {k.surplus >= 0 ? 'covers' : 'falls short of'} this month’s expenses by <b className="text-white">AED {compact(Math.abs(k.surplus), 2)}</b>.
-          Cash covers the next 90 days of obligations <b className={liq.ratio < 1.2 ? 'text-gold-400' : 'text-white'}>{liq.ratio.toFixed(2)}×</b>.
+          {liq.known ? <>Cash covers the next 90 days of obligations <b className={liq.ratio < 1.2 ? 'text-gold-400' : 'text-white'}>{liq.ratio.toFixed(2)}×</b>.</> : <>No bank balance has been entered yet, so cash cover is not shown.</>}
         </p>
       </div>
 

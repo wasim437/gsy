@@ -1,4 +1,5 @@
-import { CheckCircle2, Download, FileSpreadsheet, RefreshCw, Upload } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Download, FileSpreadsheet, Info, Loader2, RotateCcw, Upload, XCircle } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { Badge, Btn, Card, Kpi, PageHeader, StatusBadge, TableWrap } from '../components/ui'
 import { dataQuality } from '../data/engine'
 import { can, useStore } from '../data/store'
@@ -23,7 +24,7 @@ const TABLES: [string, keyof Dataset][] = [
 ]
 
 export default function DataSources() {
-  const { ds, user } = useStore()
+  const { ds, user, imported, applyImport, clearImport, today } = useStore()
   const dq = dataQuality(ds)
   const issues = dq.reduce((s, d) => s + d.items.length, 0)
   const canEdit = can(user, 'uploadData')
@@ -34,11 +35,11 @@ export default function DataSources() {
         title="Data Sources & Checks"
         subtitle="Where every figure comes from, when it was last updated, and what needs fixing in the source Excel files"
         actions={<>
-          {canEdit && <Btn variant="ghost" icon={<Upload size={15} />}>Upload Excel</Btn>}
-          {canEdit && <Btn variant="ghost" icon={<RefreshCw size={15} />}>Sync now</Btn>}
           {can(user, 'exportData') && <Btn icon={<Download size={15} />} onClick={() => TABLES.forEach(([n, k], i) => setTimeout(() => downloadCSV(n, ds[k] as object[]), i * 250))}>Export all data</Btn>}
         </>}
       />
+      {canEdit && <ImportPanel imported={imported} onApply={applyImport} onClear={clearImport} today={today} />}
+
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <Kpi label="Connected tables"><span className="num text-2xl font-semibold sm:text-3xl">{ds.syncLog.length}</span></Kpi>
         <Kpi label="Healthy" accent="good"><span className="num text-2xl font-semibold sm:text-3xl text-good">{ds.syncLog.filter((s) => s.status === 'OK').length}</span></Kpi>
@@ -46,7 +47,7 @@ export default function DataSources() {
         <Kpi label="Open data issues"><span className="num text-2xl font-semibold sm:text-3xl">{issues}</span></Kpi>
       </div>
 
-      <Card title="Sync status" subtitle="Excel workbooks on SharePoint / OneDrive, read through Microsoft Graph · scheduled every 2 hours">
+      <Card title="Sync status" subtitle={imported ? `Read from ${imported.fileName} on ${new Date(imported.importedAt).toLocaleString('en-GB', { timeZone: 'Asia/Dubai', dateStyle: 'medium', timeStyle: 'short' })}` : 'Sample data. Import GSY’s Excel above to replace it.'}>
         <TableWrap max="">
           <table className="tbl">
             <thead><tr><th>Table</th><th>Source</th><th>Last sync</th><th className="r">Rows</th><th>Status</th><th>Note</th><th></th></tr></thead>
@@ -91,5 +92,82 @@ export default function DataSources() {
         </ul>
       </Card>
     </div>
+  )
+}
+
+type ImportResult = NonNullable<ReturnType<typeof useStore>['imported']>
+
+function ImportPanel({ imported, onApply, onClear, today }: { imported: ImportResult | null; onApply: (r: ImportResult) => void; onClear: () => void; today: string }) {
+  const input = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [drag, setDrag] = useState(false)
+  const run = async (file?: File | null) => {
+    if (!file) return
+    setBusy(true)
+    setError('')
+    try {
+      const { importWorkbook } = await import('../data/importExcel') // loaded only when needed
+      onApply(await importWorkbook(file, today))
+    } catch (e) {
+      setError(`Could not read this file: ${(e as Error).message}`)
+    } finally {
+      setBusy(false)
+      if (input.current) input.current.value = ''
+    }
+  }
+  const order = { error: 0, warning: 1, info: 2 } as const
+  const issues = [...(imported?.issues ?? [])].sort((a, b) => order[a.level] - order[b.level])
+  const errors = issues.filter((i) => i.level === 'error').length
+  const warnings = issues.filter((i) => i.level === 'warning').length
+
+  return (
+    <Card
+      title={<span className="flex items-center gap-2"><FileSpreadsheet size={17} className="text-good" /> GSY Excel data</span>}
+      subtitle="The file is read inside this browser. It is not uploaded anywhere."
+      action={imported && <Btn variant="ghost" icon={<RotateCcw size={14} />} onClick={onClear}>Back to sample data</Btn>}
+    >
+      <label
+        onDragOver={(e) => { e.preventDefault(); setDrag(true) }}
+        onDragLeave={() => setDrag(false)}
+        onDrop={(e) => { e.preventDefault(); setDrag(false); run(e.dataTransfer.files?.[0]) }}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-4 py-6 text-center transition ${drag ? 'border-gold-500 bg-gold-50' : 'border-line hover:border-gold-500'}`}
+      >
+        {busy ? <Loader2 size={26} className="animate-spin text-gold-600" /> : <Upload size={26} className="text-gold-600" />}
+        <span className="text-sm font-semibold">{busy ? 'Reading the Excel…' : imported ? 'Import an updated Excel' : 'Import GSY_Data_Entry.xlsx'}</span>
+        <span className="text-xs text-muted">Click to choose the file, or drag it here</span>
+        <input ref={input} type="file" accept=".xlsx,.xlsm,.xls" className="hidden" onChange={(e) => run(e.target.files?.[0])} />
+      </label>
+      {error && <p className="mt-3 text-sm text-bad">{error}</p>}
+
+      {imported && (
+        <div className="mt-4 flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <Badge tone={errors ? 'bad' : 'good'}>{errors ? `${errors} to fix` : 'No blocking problems'}</Badge>
+            {warnings > 0 && <Badge tone="warn">{warnings} warnings</Badge>}
+            <span className="text-muted">{imported.fileName} · imported {new Date(imported.importedAt).toLocaleString('en-GB', { timeZone: 'Asia/Dubai', dateStyle: 'medium', timeStyle: 'short' })} · Company Info: {imported.settings.answered} of {imported.settings.questions} answered</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-6">
+            {Object.entries(imported.counts).map(([k, v]) => (
+              <div key={k} className={`rounded-xl px-3 py-2 ${v ? 'bg-page' : 'bg-warn-bg'}`}>
+                <div className="text-[0.6875rem] text-muted">{k}</div>
+                <div className={`num text-lg font-semibold ${v ? '' : 'text-warn'}`}>{v}</div>
+              </div>
+            ))}
+          </div>
+          <div>
+            <div className="mb-2 text-xs font-semibold text-muted">What to fix in the Excel ({issues.length})</div>
+            <ul className="flex flex-col gap-1.5">
+              {issues.map((i, n) => (
+                <li key={n} className={`flex items-start gap-2 rounded-xl px-3 py-2 text-sm ${i.level === 'error' ? 'bg-bad-bg' : i.level === 'warning' ? 'bg-warn-bg' : 'bg-page'}`}>
+                  {i.level === 'error' ? <XCircle size={15} className="mt-0.5 shrink-0 text-bad" /> : i.level === 'warning' ? <AlertTriangle size={15} className="mt-0.5 shrink-0 text-warn" /> : <Info size={15} className="mt-0.5 shrink-0 text-muted" />}
+                  <span><b className="text-ink">{i.sheet}:</b> <span className="text-ink-2">{i.message}</span></span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+    </Card>
   )
 }

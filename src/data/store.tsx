@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
 import { monthKey, todayISO } from '../lib/dates'
 import { buildCtx, type Ctx, type Filters, type ListFilterKey } from './engine'
+import type { ImportResult } from './importExcel'
 import { generateSampleData } from './seed'
 import type { CountryCode, Dataset } from './types'
 
@@ -102,6 +103,10 @@ interface Store {
   saveView: (name: string) => void
   deleteView: (name: string) => void
   ctx: Ctx
+  /** GSY's imported Excel data, or null when the app shows sample data. */
+  imported: ImportResult | null
+  applyImport: (r: ImportResult) => void
+  clearImport: () => void
   user: User | null
   users: User[]
   roles: RoleDef[]
@@ -122,7 +127,10 @@ export function emptyFilters(month: string): Filters {
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const today = useMemo(() => todayISO(), [])
-  const ds = useMemo(() => generateSampleData(today), [today])
+  const sample = useMemo(() => generateSampleData(today), [today])
+  // Imported data stays in this browser only (never uploaded); it survives a page refresh.
+  const [imported, setImported] = useState<ImportResult | null>(() => load<ImportResult | null>('gsy.import.v1', null))
+  const ds = imported?.ds ?? sample
   const [filters, setF] = useState<Filters>(() => emptyFilters(monthKey(today)))
   const [users, setUsers] = useState<User[]>(() => load('gsy.users.v2', SEED_USERS))
   const [roles, setRoles] = useState<RoleDef[]>(() => load('gsy.roles.v1', []))
@@ -157,7 +165,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const activeFilterCount = f.companyIds.length + f.countries.length + f.productIds.length + f.currencies.length + f.salesIds.length + f.segments.length + f.states.length + (f.month !== monthKey(today) ? 1 : 0)
 
   const store: Store = {
-    ds, today, filters: effective, ctx, user, users, roles, audit, views, activeFilterCount,
+    ds, today, filters: effective, ctx, user, users, roles, audit, views, activeFilterCount, imported,
+    applyImport: (r) => {
+      setImported(r)
+      save('gsy.import.v1', r)
+      setF(emptyFilters(monthKey(today)))
+      log(`Imported ${r.fileName} (${r.counts.Investors} investors, ${r.counts.Investments} investments)`)
+    },
+    clearImport: () => {
+      setImported(null)
+      try { localStorage.removeItem('gsy.import.v1') } catch { /* storage blocked */ }
+      setF(emptyFilters(monthKey(today)))
+    },
     setFilters: (p) => setF((prev) => ({ ...prev, ...p })),
     toggleFilter: (k, v) =>
       setF((prev) => {

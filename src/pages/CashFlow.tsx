@@ -31,10 +31,10 @@ export default function CashFlow() {
     <div className="flex flex-col gap-5">
       <PageHeader title="Cash Flow & Risk" subtitle="Daily money in and out, liquidity cover and a 12-month forecast of where cash gets tight" />
       <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
-        <Kpi label="Liquidity cover (90 days)" accent={liq.ratio >= 1.2 ? 'good' : 'bad'} sub="Bank balance ÷ obligations due in 90 days (red below 1.2×)">
-          <span className={`num text-2xl font-semibold sm:text-3xl ${liq.ratio >= 1.2 ? 'text-good' : 'text-bad'}`}>{liq.ratio.toFixed(2)}×</span>
+        <Kpi label="Liquidity cover (90 days)" accent={!liq.known ? undefined : liq.ratio >= 1.2 ? 'good' : 'bad'} sub={liq.known ? 'Bank balance ÷ obligations due in 90 days (red below 1.2×)' : 'No bank balance entered yet (Excel sheet 8)'}>
+          {liq.known ? <span className={`num text-2xl font-semibold sm:text-3xl ${liq.ratio >= 1.2 ? 'text-good' : 'text-bad'}`}>{liq.ratio.toFixed(2)}×</span> : <span className="text-2xl font-semibold text-muted">—</span>}
         </Kpi>
-        <Kpi label="Bank balance (all accounts)" sub={`As of ${fmtDate(ds.bankBalances[0].asOf)}`}><Big v={liq.cash} /></Kpi>
+        <Kpi label="Bank balance (all accounts)" sub={ds.bankBalances[0] ? `As of ${fmtDate(ds.bankBalances[0].asOf)}` : 'Not entered yet'}><Big v={liq.cash} /></Kpi>
         <Kpi label="Obligations next 90 days" sub="Profit + capital + overdue"><Big v={liq.obligations} /></Kpi>
         <Kpi label="Months with cash gap (12 mo)" accent={short.length ? 'bad' : 'good'} sub={short.length ? short.map((m) => monthLabel(m.month)).join(', ') : 'No shortfall forecast'}><span className="num text-2xl font-semibold sm:text-3xl">{short.length}</span></Kpi>
       </div>

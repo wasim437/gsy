@@ -79,7 +79,7 @@ export default function StressTest() {
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
         <Card title="Liquidity cover" subtitle="Bank balance ÷ obligations in the next 90 days">
           <div className="flex flex-col items-center">
-            <Gauge value={liq.ratio} label="Liquidity cover" />
+            {liq.known ? <Gauge value={liq.ratio} label="Liquidity cover" /> : <div className="grid h-36 place-items-center text-center text-sm text-muted">No bank balance entered yet<br />(Excel sheet 8)</div>}
             <div className="mt-2 grid w-full grid-cols-2 gap-2 text-xs">
               <div className="rounded-lg bg-page px-3 py-2"><div className="text-muted">Cash</div><div className="num font-semibold">AED {compact(liq.cash, 2)}</div></div>
               <div className="rounded-lg bg-page px-3 py-2"><div className="text-muted">Due 90 days</div><div className="num font-semibold">AED {compact(liq.obligations, 2)}</div></div>

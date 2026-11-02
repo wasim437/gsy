@@ -22,7 +22,6 @@ export function moneyFlow(ctx: Ctx) {
   const companies = ctx.ds.companies.filter((c) => c.type === 'Investment Co').map((c) => ({ id: c.id, name: c.name }))
   const products = ctx.ds.products.map((p) => ({ id: p.id, name: p.name }))
   const nodes = [...countries, ...companies, ...products]
-  const idx = new Map(nodes.map((n, i) => [n.id, i]))
   const agg = new Map<string, number>()
   const add = (a: string, b: string, v: number) => agg.set(`${a}|${b}`, (agg.get(`${a}|${b}`) ?? 0) + v)
   for (const c of active) {
@@ -31,11 +30,15 @@ export function moneyFlow(ctx: Ctx) {
     add(cc, c.companyId, v)
     add(c.companyId, c.productId, v)
   }
-  const links = [...agg.entries()].filter(([, v]) => v > 0).map(([k, v]) => {
+  const live = [...agg.entries()].filter(([, v]) => v > 0)
+  const usedIds = new Set(live.flatMap(([k]) => k.split('|')))
+  const kept = nodes.filter((n) => usedIds.has(n.id))
+  const at = new Map(kept.map((n, i) => [n.id, i]))
+  const links = live.map(([k, v]) => {
     const [a, b] = k.split('|')
-    return { source: idx.get(a)!, target: idx.get(b)!, value: Math.round(v) }
+    return { source: at.get(a)!, target: at.get(b)!, value: Math.round(v) }
   })
-  return { nodes, links }
+  return { nodes: kept, links }
 }
 
 export type Dim = 'country' | 'company' | 'product' | 'sales' | 'currency'

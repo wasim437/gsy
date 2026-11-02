@@ -9,3 +9,9 @@ dist
 # Client-confidential working notes (brief details, pricing). Keep local until the repo is private.
 docs/
 *.tsbuildinfo
+
+# Client data files: never commit (public repo)
+*.xlsx
+*.xls
+*.csv
+client-data/

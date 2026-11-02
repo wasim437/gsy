@@ -13,7 +13,7 @@ import { compact, full } from '../../lib/format'
 const SOURCES = ['Referral', 'Social media', 'Events', 'Freelancer', 'Website'] as const
 
 export default function SalesPerformance() {
-  const { ctx, ds, filters, today, user } = useStore()
+  const { ctx, ds, filters, today, user, imported } = useStore()
   const crm = crmCommission(ctx)
   const leads = filteredLeads(ctx)
 
@@ -53,9 +53,13 @@ export default function SalesPerformance() {
       <PageHeader title="Sales Performance" subtitle="Targets, who is performing, how each person compares, and which lead sources bring in money" actions={<Badge tone="gold">Advanced analytics</Badge>} />
 
       <Card title={`Targets vs actual: ${monthLabel(ctx.filters.month, 'long')}`} subtitle="Bar = raised · gold marker = monthly target · shaded = 75% and 100% bands (sample targets)">
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-          {targets.map((t) => <Bullet key={t.c.code} label={t.c.team} actual={t.actual} target={t.target} />)}
-        </div>
+        {imported ? (
+          <p className="text-sm text-muted">No sales targets have been entered yet. They come from Setup → Sales Targets in the Excel.</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            {targets.map((t) => <Bullet key={t.c.code} label={t.c.team} actual={t.actual} target={t.target} />)}
+          </div>
+        )}
       </Card>
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-5">

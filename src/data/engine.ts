@@ -411,7 +411,8 @@ export function liquidity(ctx: Ctx) {
   const horizon = addDays(ctx.ref, 90)
   const obligations = ctx.schedule.filter((r) => r.dueDate > ctx.ref && r.dueDate <= horizon).reduce((s, r) => s + ctx.toAED(r.totalDue, r.currency, r.dueDate), 0)
   const overdue = ctx.schedule.reduce((s, r) => s + (r.status === 'Overdue' || r.status === 'Partly paid' ? ctx.toAED(r.remaining, r.currency, r.dueDate) : 0), 0)
-  return { cash, obligations: obligations + overdue, ratio: obligations + overdue > 0 ? cash / (obligations + overdue) : 0 }
+  const known = ctx.ds.bankBalances.length > 0
+  return { cash, known, obligations: obligations + overdue, ratio: known && obligations + overdue > 0 ? cash / (obligations + overdue) : 0 }
 }
 
 // ---------------------------------------------------------------- data quality / reconciliation
