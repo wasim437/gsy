@@ -4,13 +4,12 @@ import Intro from './components/Intro'
 import HumanCheck from './components/HumanCheck'
 import Layout from './components/Layout'
 import UpdateNotice from './components/UpdateNotice'
-import { adminHref, dashboardHref, isAdminSite, isLocal } from './lib/site'
+import { adminHref, adminSeparate, dashboardHref, isAdminSite } from './lib/site'
 import { useTheme } from './lib/theme'
 import { can, useStore, type Permission } from './data/store'
 import { ALL_NAV } from './components/Layout'
 import ReportBuilder from './pages/ReportBuilder'
 import Portal from './portal/Portal'
-import Admin from './pages/Admin'
 import Assistant from './pages/Assistant'
 import CashFlow from './pages/CashFlow'
 import CompanyCommission from './pages/CompanyCommission'
@@ -119,7 +118,7 @@ export default function App() {
       ) : (
         <>
           <Route path="/statement/:id" element={<RequireAuth><HumanCheck><Statement /></HumanCheck></RequireAuth>} />
-          <Route path="/portal/:section?" element={isLocal ? <RequireAuth admin><HumanCheck><Portal /></HumanCheck></RequireAuth> : <ToAdmin />} />
+          <Route path="/portal/:section?" element={adminSeparate ? <ToAdmin /> : <RequireAuth admin><HumanCheck><Portal /></HumanCheck></RequireAuth>} />
           <Route element={<RequireAuth><HumanCheck><Layout /></HumanCheck></RequireAuth>}>
             <Route index element={<Home />} />
             <Route path="cash" element={<CashFlow />} />
@@ -137,7 +136,7 @@ export default function App() {
             <Route path="reports" element={<Reports />} />
             <Route path="assistant" element={<Assistant />} />
             <Route path="data" element={<DataSources />} />
-            <Route path="admin" element={<Admin />} />
+            <Route path="admin" element={<Navigate to={adminSeparate ? '/portal' : '/portal/users'} replace />} />
             <Route path="builder" element={<ReportBuilder />} />
             <Route path="analytics/flow" element={<MoneyFlow />} />
             <Route path="analytics/stress" element={<StressTest />} />

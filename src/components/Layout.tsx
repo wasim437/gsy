@@ -9,7 +9,7 @@ import type { ListFilterKey } from '../data/engine'
 import { can, useStore, type Permission } from '../data/store'
 import { CURRENCIES } from '../data/types'
 import { addMonthKey, fmtDate, monthKey, monthLabel } from '../lib/dates'
-import { adminHref, isLocal } from '../lib/site'
+import { adminHref, adminSeparate } from '../lib/site'
 import ChangesBell from './ChangesBell'
 import { SampleBanner, ThemeToggle } from './ui'
 
@@ -48,7 +48,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     { to: '/assistant', label: 'AI Assistant', short: 'Ask AI', icon: <Sparkles size={18} />, perm: 'useAI' },
     { to: '/portal', label: 'Admin Portal · Data Entry', icon: <Wand2 size={18} />, perm: 'uploadData' },
     { to: '/data', label: 'Data Sources & Checks', icon: <Database size={18} />, perm: 'reviewData' },
-    { to: '/admin', label: 'Users & Access', icon: <ShieldCheck size={18} />, perm: 'manageUsers' },
+    { to: '/portal/users', label: 'Users & Access', icon: <ShieldCheck size={18} />, perm: 'manageUsers' },
   ] },
 ]
 export const ALL_NAV = NAV.flatMap((g) => g.items)
@@ -77,7 +77,7 @@ function SideNav({ onNavigate }: { onNavigate?: () => void }) {
           <div key={g.group}>
             <div className="mb-1.5 px-3 text-[0.625rem] font-semibold tracking-[0.14em] text-white/35 uppercase">{g.group}</div>
             <div className="flex flex-col gap-0.5">
-              {items.map((i) => i.to === '/portal' && !isLocal ? (
+              {items.map((i) => i.to === '/portal' && adminSeparate ? (
                 <a key={i.to} href={adminHref()} target="_blank" rel="noopener" onClick={onNavigate} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[0.8125rem] text-white/70 transition hover:bg-white/5 hover:text-white">
                   {i.icon}
                   <span className="truncate">{i.label}</span>

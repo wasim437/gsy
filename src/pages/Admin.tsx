@@ -4,7 +4,7 @@ import { Badge, Btn, Card, Kpi, PageHeader, TableWrap } from '../components/ui'
 import { ALL_PERMISSIONS, CHAIRMAN, PERMISSIONS, can, useStore, type Permission, type RoleDef, type User } from '../data/store'
 import type { CountryCode } from '../data/types'
 import { fmtDate } from '../lib/dates'
-import { ADMIN_URL, DASHBOARD_URL, isLocal } from '../lib/site'
+import { ADMIN_HOME, DASHBOARD_URL, isLocal } from '../lib/site'
 
 const uid = (p: string) => `${p}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`
 const today = () => new Date().toISOString().slice(0, 10)
@@ -359,7 +359,7 @@ function InviteCard({ u, onClose }: { u: User; onClose: () => void }) {
     `1. Open this link and create your account with ${u.email}:`,
     link,
     '2. Choose a password (at least 8 characters) and confirm your email.',
-    ...(enters ? ['', `For data entry, sign in to the Admin Portal with the same email and password:`, isLocal ? `${location.origin}/portal` : ADMIN_URL] : []),
+    ...(enters ? ['', `For data entry, sign in to the Admin Portal with the same email and password:`, isLocal ? `${location.origin}/portal` : ADMIN_HOME] : []),
   ].join('\n')
   const copy = async () => {
     try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch { /* clipboard blocked: the text is selectable */ }
