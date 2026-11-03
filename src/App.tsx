@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Intro from './components/Intro'
+import HumanCheck from './components/HumanCheck'
 import Layout from './components/Layout'
 import { can, useStore, type Permission } from './data/store'
 import { ALL_NAV } from './components/Layout'
@@ -63,7 +64,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/statement/:id" element={<RequireAuth><Statement /></RequireAuth>} />
-      <Route path="/portal/:section?" element={<RequireAuth><Portal /></RequireAuth>} />
+      <Route path="/portal/:section?" element={<RequireAuth><HumanCheck><Portal /></HumanCheck></RequireAuth>} />
       <Route element={<RequireAuth><Layout /></RequireAuth>}>
         <Route index element={<Home />} />
         <Route path="cash" element={<CashFlow />} />
