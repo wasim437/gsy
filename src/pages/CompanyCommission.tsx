@@ -72,7 +72,7 @@ export default function CompanyCommission() {
                 <YAxis tickFormatter={fmtAxis} tick={axisTick} axisLine={false} tickLine={false} width={48} />
                 <ReferenceLine y={0} stroke={C.axis} />
                 <Tooltip cursor={{ fill: 'rgba(201,162,77,0.08)' }} content={({ active, payload }) => active && payload?.length ? (
-                  <div className="rounded-xl border border-line bg-white px-3 py-2 text-xs shadow-lg"><b>{payload[0].payload.name}</b><div className="num">AED {full(payload[0].payload.value)}</div></div>
+                  <div className="rounded-xl border border-line bg-surface px-3 py-2 text-xs shadow-lg"><b>{payload[0].payload.name}</b><div className="num">AED {full(payload[0].payload.value)}</div></div>
                 ) : null} />
                 <Bar dataKey="range" radius={4} maxBarSize={40}>
                   {steps.map((s) => <Cell key={s.name} fill={s.kind === 'in' ? C.c1 : s.kind === 'out' ? C.c4 : s.value >= 0 ? C.good : C.bad} />)}

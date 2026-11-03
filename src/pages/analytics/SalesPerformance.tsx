@@ -83,7 +83,7 @@ export default function SalesPerformance() {
                 <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: '#3f4a5e' }} />
                 <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
                 <Tooltip content={({ active, payload, label }) => active && payload?.length ? (
-                  <div className="rounded-xl border border-line bg-white px-3 py-2 text-xs shadow-lg"><b>{label}</b>{payload.map((x) => <div key={String(x.dataKey)} className="num">{ctx.salesById.get(String(x.dataKey))?.name}: {x.value}/100</div>)}</div>
+                  <div className="rounded-xl border border-line bg-surface px-3 py-2 text-xs shadow-lg"><b>{label}</b>{payload.map((x) => <div key={String(x.dataKey)} className="num">{ctx.salesById.get(String(x.dataKey))?.name}: {x.value}/100</div>)}</div>
                 ) : null} />
                 {sel.map((p) => {
                   const color = SERIES[picked.indexOf(p.sp.id)]
@@ -104,7 +104,7 @@ export default function SalesPerformance() {
                 <YAxis type="number" dataKey="raisedAED" name="Raised" tickFormatter={fmtAxis} tick={axisTick} axisLine={false} tickLine={false} width={52} />
                 <ZAxis type="number" dataKey="pipe" range={[60, 900]} />
                 <Tooltip content={({ active, payload }) => active && payload?.length ? (
-                  <div className="rounded-xl border border-line bg-white px-3 py-2 text-xs shadow-lg">
+                  <div className="rounded-xl border border-line bg-surface px-3 py-2 text-xs shadow-lg">
                     <b>{payload[0].payload.sp.name}</b> <span className="text-muted">({payload[0].payload.sp.type})</span>
                     <div className="num">Raised AED {full(payload[0].payload.raisedAED)}</div>
                     <div>{payload[0].payload.deals} deals · win rate {Math.round(payload[0].payload.winRate * 100)}%</div>

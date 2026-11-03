@@ -180,6 +180,13 @@ export async function loadPeople(): Promise<{ users: User[]; roles: RoleDef[]; a
 }
 const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s)
 
+/** The change log, newest first (details hold old and new values once 002_history.sql has run). */
+export async function loadHistory(limit = 500): Promise<DbRow[]> {
+  const { data, error } = await supabase.from('audit_log').select('*').order('at', { ascending: false }).limit(limit)
+  if (error) throw new Error(friendly(error.message))
+  return data ?? []
+}
+
 export async function logAction(userId: string, userName: string, action: string) {
   await supabase.from('audit_log').insert({ user_id: userId, user_name: userName, action })
 }

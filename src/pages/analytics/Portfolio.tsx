@@ -59,7 +59,7 @@ export default function Portfolio() {
                 <ZAxis type="number" dataKey="profit" range={[40, 700]} />
                 <ReferenceLine x={3} stroke={C.bad} strokeDasharray="4 3" label={{ value: '3 months', fontSize: 10, fill: C.bad, position: 'top' }} />
                 <Tooltip cursor={{ strokeDasharray: '3 3' }} content={({ active: a, payload }) => a && payload?.length ? (
-                  <div className="rounded-xl border border-line bg-white px-3 py-2 text-xs shadow-lg">
+                  <div className="rounded-xl border border-line bg-surface px-3 py-2 text-xs shadow-lg">
                     <b>{payload[0].payload.name}</b>
                     <div className="num">Capital AED {full(payload[0].payload.capital)}</div>
                     <div className="num">Profit AED {full(payload[0].payload.profit)} / month</div>
@@ -82,7 +82,7 @@ export default function Portfolio() {
                 <XAxis dataKey="label" tick={axisTick} axisLine={false} tickLine={false} />
                 <YAxis allowDecimals={false} tick={axisTick} axisLine={false} tickLine={false} width={40} />
                 <Tooltip cursor={{ fill: 'rgba(201,162,77,0.08)' }} content={({ active: a, payload }) => a && payload?.length ? (
-                  <div className="rounded-xl border border-line bg-white px-3 py-2 text-xs shadow-lg"><b>{payload[0].payload.label}</b><div>{payload[0].payload.count} contracts</div><div className="num">AED {full(payload[0].payload.capital)}</div></div>
+                  <div className="rounded-xl border border-line bg-surface px-3 py-2 text-xs shadow-lg"><b>{payload[0].payload.label}</b><div>{payload[0].payload.count} contracts</div><div className="num">AED {full(payload[0].payload.capital)}</div></div>
                 ) : null} />
                 <Bar dataKey="count" name="Contracts" fill={C.c1} radius={[4, 4, 0, 0]} maxBarSize={56} label={{ position: 'top', fontSize: 11, fill: '#3f4a5e' }} />
               </BarChart>

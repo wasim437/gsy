@@ -1,15 +1,20 @@
 import type { ReactNode } from 'react'
 import { compact } from '../lib/format'
+import { chartTheme } from './charts'
 
-// Sequential ramp (one hue, light → dark) for magnitude: heatmaps, calendars.
+// Sequential ramp (one blue hue) for magnitude: heatmaps, calendars. Light mode runs pale → deep,
+// dark mode runs from near the dark surface → bright, so "more" always stands out.
 const LO = [236, 241, 248]
 const HI = [27, 58, 118]
+const LO_DARK = [28, 40, 64]
+const HI_DARK = [125, 168, 240]
 export function seq(t: number): string {
   const x = Math.max(0, Math.min(1, t))
-  const c = LO.map((l, i) => Math.round(l + (HI[i] - l) * x))
+  const [lo, hi] = chartTheme.dark ? [LO_DARK, HI_DARK] : [LO, HI]
+  const c = lo.map((l, i) => Math.round(l + (hi[i] - l) * x))
   return `rgb(${c[0]},${c[1]},${c[2]})`
 }
-export const seqInk = (t: number) => (t > 0.55 ? '#ffffff' : '#14213a')
+export const seqInk = (t: number) => (chartTheme.dark ? (t > 0.55 ? '#0b1220' : '#e7ebf3') : t > 0.55 ? '#ffffff' : '#14213a')
 
 export function SeqLegend({ min = '0', max, label }: { min?: string; max: string; label: string }) {
   return (
@@ -52,7 +57,7 @@ export function Heatmap({ rows, cols, fmt = (v) => compact(v, 1), max: maxIn, on
                     onClick={() => onCell?.(i, j)}
                     title={v === null ? 'No data' : fmt(v)}
                     className={`num h-8 min-w-12 rounded-md text-center text-[0.6875rem] font-semibold transition hover:ring-2 hover:ring-gold-500 ${onCell ? 'cursor-pointer' : ''}`}
-                    style={{ background: v === null ? '#f4f2ec' : seq(t), color: v === null ? '#b8b2a4' : seqInk(t) }}
+                    style={{ background: v === null ? 'var(--color-line-2)' : seq(t), color: v === null ? 'var(--color-muted)' : seqInk(t) }}
                   >
                     {v === null ? '·' : v === 0 ? '' : fmt(v)}
                   </td>
@@ -106,8 +111,8 @@ export function Bullet({ label, actual, target, fmt = (v: number) => compact(v, 
         <span className="num"><b className={tone}>{(pct * 100).toFixed(0)}%</b> <span className="text-muted">· AED {fmt(actual)} of {fmt(target)}</span></span>
       </div>
       <div className="relative h-5 overflow-hidden rounded-md bg-line-2" title={`Actual ${fmt(actual)} · Target ${fmt(target)}`}>
-        <div className="absolute inset-y-0 left-0 bg-[#e6e1d3]" style={{ width: `${(target * 0.75 / max) * 100}%` }} />
-        <div className="absolute inset-y-0 left-0 bg-[#efebe1]" style={{ width: `${(target / max) * 100}%`, mixBlendMode: 'multiply' }} />
+        <div className="absolute inset-y-0 left-0 bg-line" style={{ width: `${(target * 0.75 / max) * 100}%` }} />
+        <div className="absolute inset-y-0 left-0 bg-line-2" style={{ width: `${(target / max) * 100}%`, mixBlendMode: 'multiply' }} />
         <div className="absolute inset-y-[5px] left-0 rounded-r-sm bg-navy-800" style={{ width: `${(actual / max) * 100}%` }} />
         <div className="absolute inset-y-0.5 w-[3px] rounded bg-gold-600" style={{ left: `calc(${(target / max) * 100}% - 1px)` }} />
       </div>

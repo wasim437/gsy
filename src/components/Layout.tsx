@@ -9,7 +9,9 @@ import type { ListFilterKey } from '../data/engine'
 import { can, useStore, type Permission } from '../data/store'
 import { CURRENCIES } from '../data/types'
 import { addMonthKey, fmtDate, monthKey, monthLabel } from '../lib/dates'
-import { SampleBanner } from './ui'
+import { adminHref, isLocal } from '../lib/site'
+import ChangesBell from './ChangesBell'
+import { SampleBanner, ThemeToggle } from './ui'
 
 export interface NavItem { to: string; label: string; icon: ReactNode; short?: string; perm: Permission }
 
@@ -75,7 +77,13 @@ function SideNav({ onNavigate }: { onNavigate?: () => void }) {
           <div key={g.group}>
             <div className="mb-1.5 px-3 text-[0.625rem] font-semibold tracking-[0.14em] text-white/35 uppercase">{g.group}</div>
             <div className="flex flex-col gap-0.5">
-              {items.map((i) => (
+              {items.map((i) => i.to === '/portal' && !isLocal ? (
+                <a key={i.to} href={adminHref()} target="_blank" rel="noopener" onClick={onNavigate} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[0.8125rem] text-white/70 transition hover:bg-white/5 hover:text-white">
+                  {i.icon}
+                  <span className="truncate">{i.label}</span>
+                  <span className="ml-auto text-white/40">↗</span>
+                </a>
+              ) : (
                 <NavLink
                   key={i.to}
                   to={i.to}
@@ -137,7 +145,7 @@ function MultiSelect({ k, compact }: { k: ListFilterKey; compact?: boolean }) {
         <ChevronDown size={14} className="shrink-0 text-muted" />
       </button>
       {open && (
-        <div className="absolute top-full left-0 z-40 mt-1 w-64 rounded-xl border border-line bg-white p-2 shadow-xl">
+        <div className="absolute top-full left-0 z-40 mt-1 w-64 rounded-xl border border-line bg-surface p-2 shadow-xl">
           {options.length > 6 && (
             <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="mb-1.5 h-8 w-full rounded-md border border-line px-2 text-xs outline-none focus:border-gold-500" />
           )}
@@ -246,7 +254,7 @@ function FilterPane({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-navy-950/40" onClick={onClose} />
       <aside className="absolute inset-y-0 right-0 flex w-[380px] max-w-[92vw] flex-col bg-page shadow-2xl">
-        <div className="flex items-center justify-between border-b border-line bg-white px-5 py-4">
+        <div className="flex items-center justify-between border-b border-line bg-surface px-5 py-4">
           <div>
             <div className="font-semibold">Filters</div>
             <div className="text-xs text-muted">{activeFilterCount ? `${activeFilterCount} active · applies to every page` : 'Applies to every page'}</div>
@@ -258,7 +266,7 @@ function FilterPane({ onClose }: { onClose: () => void }) {
           <CurrencyToggle />
           {(Object.keys(LABELS) as ListFilterKey[]).map((k) => <MultiSelect key={k} k={k} />)}
 
-          <div className="rounded-xl border border-line bg-white p-3">
+          <div className="rounded-xl border border-line bg-surface p-3">
             <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold"><Bookmark size={14} className="text-gold-600" /> Saved views</div>
             <form onSubmit={(e) => { e.preventDefault(); if (name.trim()) { saveView(name.trim()); setName('') } }} className="flex gap-1.5">
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. India · Board meeting" className="h-8 flex-1 rounded-md border border-line px-2 text-xs outline-none focus:border-gold-500" />
@@ -275,7 +283,7 @@ function FilterPane({ onClose }: { onClose: () => void }) {
             </div>
           </div>
         </div>
-        <div className="flex gap-2 border-t border-line bg-white p-4">
+        <div className="flex gap-2 border-t border-line bg-surface p-4">
           <button onClick={resetFilters} className="flex-1 rounded-xl border border-line py-2 text-sm font-medium hover:bg-gold-50">Clear all</button>
           <button onClick={onClose} className="flex-1 rounded-xl bg-navy-900 py-2 text-sm font-semibold text-white">Show results</button>
         </div>
@@ -301,7 +309,7 @@ function CommandPalette({ onClose }: { onClose: () => void }) {
   const go = (to: string) => { nav(to); onClose() }
   return (
     <div className="fixed inset-0 z-[60] flex items-start justify-center bg-navy-950/40 px-4 pt-[12vh]" onClick={onClose}>
-      <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-surface shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2 border-b border-line px-4">
           <Search size={17} className="text-muted" />
           <input
@@ -349,7 +357,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen lg:pl-64">
-      <aside className="no-print fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-navy-900 px-3 py-5 lg:flex">
+      <aside className="no-print fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-sidebar px-3 py-5 lg:flex">
         <div className="px-3 pb-6"><Brand /></div>
         <div className="scroll-thin flex-1 overflow-y-auto pr-1"><SideNav /></div>
         <UserBox onSignOut={signOut} name={user?.name ?? ''} role={user?.role ?? ''} />
@@ -358,7 +366,7 @@ export default function Layout() {
       {drawer && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-navy-950/60" onClick={() => setDrawer(false)} />
-          <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-navy-900 px-3 py-5">
+          <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-sidebar px-3 py-5">
             <div className="flex items-center justify-between px-3 pb-6">
               <Brand />
               <button onClick={() => setDrawer(false)} className="rounded-lg p-1.5 text-white/70 hover:bg-white/10" aria-label="Close menu"><X size={20} /></button>
@@ -382,6 +390,8 @@ export default function Layout() {
               <SampleBanner />
             </div>
           </div>
+          <ChangesBell />
+          <ThemeToggle />
           <button onClick={() => setPalette(true)} className="hidden h-8 items-center gap-2 rounded-lg border border-line bg-surface px-3 text-xs text-muted hover:border-gold-500 sm:flex">
             <Search size={14} /> Search <kbd className="rounded border border-line px-1 text-[0.625rem]">Ctrl K</kbd>
           </button>
@@ -400,7 +410,7 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      <nav className="no-print fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-white/10 bg-navy-900 pb-[env(safe-area-inset-bottom)] lg:hidden">
+      <nav className="no-print fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-white/10 bg-sidebar pb-[env(safe-area-inset-bottom)] lg:hidden">
         {MOBILE_TABS.map((to) => {
           const i = ALL_NAV.find((x) => x.to === to)!
           return (

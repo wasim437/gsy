@@ -50,7 +50,7 @@ export default function Reports() {
               <button key={id} onClick={() => setTab(id)} className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${tab === id ? 'bg-navy-900 text-white' : 'text-muted'}`}>{l}</button>
             ))}
           </div>
-          <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
+          <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
             <div className="border-b border-line bg-page px-5 py-3 text-xs text-muted">
               <div><b className="text-ink">From:</b> GSY Investor Monitor &lt;reports@gsy-project&gt;</div>
               <div><b className="text-ink">Subject:</b> {tab === 'daily' ? `GSY Daily Financial Report · ${fmtDate(ctx.ref)}` : `GSY Morning Brief · ${fmtDate(ctx.ref)}`}</div>

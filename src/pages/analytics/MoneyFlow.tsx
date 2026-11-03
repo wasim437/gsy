@@ -42,7 +42,7 @@ export default function MoneyFlow() {
                 if (!a || !payload?.length) return null
                 const p = payload[0].payload?.payload ?? payload[0].payload
                 const label = p.source && p.target ? `${p.source.name} → ${p.target.name}` : p.name
-                return <div className="rounded-xl border border-line bg-white px-3 py-2 text-xs shadow-lg"><b>{label}</b><div className="num">AED {full(p.value)} · {pct(p.value / total, 1)}</div></div>
+                return <div className="rounded-xl border border-line bg-surface px-3 py-2 text-xs shadow-lg"><b>{label}</b><div className="num">AED {full(p.value)} · {pct(p.value / total, 1)}</div></div>
               }} />
             </Sankey>
           </ResponsiveContainer>
@@ -57,7 +57,7 @@ export default function MoneyFlow() {
             <ResponsiveContainer>
               <Treemap data={tree} dataKey="size" aspectRatio={1.4} isAnimationActive={false} content={<TreeTile />}>
                 <Tooltip content={({ active: a, payload }: any) => a && payload?.length ? (
-                  <div className="rounded-xl border border-line bg-white px-3 py-2 text-xs shadow-lg"><b>{payload[0].payload.name}</b><div className="num">AED {full(payload[0].value)}</div></div>
+                  <div className="rounded-xl border border-line bg-surface px-3 py-2 text-xs shadow-lg"><b>{payload[0].payload.name}</b><div className="num">AED {full(payload[0].value)}</div></div>
                 ) : null} />
               </Treemap>
             </ResponsiveContainer>

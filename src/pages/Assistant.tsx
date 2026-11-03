@@ -254,7 +254,7 @@ export default function Assistant() {
               )}
               <div ref={end} />
             </div>
-            <div className="border-t border-line bg-white p-2.5 sm:p-3">
+            <div className="border-t border-line bg-surface p-2.5 sm:p-3">
               {msgs.length > 0 && (
                 <div className="scroll-thin mb-2 flex gap-1.5 overflow-x-auto pb-1">
                   {STARTERS.map((s) => <button key={s} onClick={() => ask(s)} className="shrink-0 rounded-full border border-line bg-surface px-3 py-1 text-xs text-ink-2 hover:border-gold-500">{s}</button>)}
@@ -286,7 +286,7 @@ function AnswerCard({ a, onAsk, asOf }: { a: Answer; onAsk: (q: string) => void;
   return (
     <div className="flex gap-2.5">
       <span className="mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-navy-900"><Bot size={16} className="text-gold-400" /></span>
-      <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md border border-line bg-white p-3.5 shadow-sm sm:p-4">
+      <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md border border-line bg-surface p-3.5 shadow-sm sm:p-4">
         {a.headline && <div className="num text-base font-semibold sm:text-lg">{a.headline}</div>}
         {a.text && <p className="mt-1 text-sm text-ink-2">{a.text}</p>}
         {a.kpis && (

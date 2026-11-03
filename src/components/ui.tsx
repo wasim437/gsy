@@ -1,10 +1,11 @@
-import { AlertTriangle, CheckCircle2, Clock, Info, Maximize2, X, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Clock, Info, Maximize2, Moon, Sun, X, XCircle } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { useStore } from '../data/store'
 import type { Currency, Money } from '../data/types'
 import { compact, curLabel, full, moneyEntries } from '../lib/format'
+import { toggleTheme, useTheme } from '../lib/theme'
 
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: ReactNode; actions?: ReactNode }) {
   return (
@@ -104,7 +105,7 @@ const TONES: Record<Tone, string> = {
   bad: 'bg-bad-bg text-bad',
   gold: 'bg-gold-100 text-gold-600',
   navy: 'bg-navy-900 text-white',
-  info: 'bg-[#e8eef8] text-c1',
+  info: 'bg-info-bg text-c1',
 }
 
 export function Badge({ tone = 'neutral', children, icon }: { tone?: Tone; children: ReactNode; icon?: ReactNode }) {
@@ -216,6 +217,24 @@ export function Btn({ children, onClick, variant = 'primary', icon, type = 'butt
     <button type={type} onClick={onClick} className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium transition ${v}`}>
       {icon}
       {children}
+    </button>
+  )
+}
+
+/** Light / dark switch. `onDark` styles it for the navy sidebar. */
+export function ThemeToggle({ onDark = false, label = false }: { onDark?: boolean; label?: boolean }) {
+  const theme = useTheme()
+  const dark = theme === 'dark'
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      className={`inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-medium transition ${onDark ? 'text-white/70 hover:bg-white/10 hover:text-white' : 'border border-line bg-surface text-ink-2 hover:border-gold-500'}`}
+    >
+      {dark ? <Sun size={15} /> : <Moon size={15} />}
+      {label && <span>{dark ? 'Light mode' : 'Dark mode'}</span>}
     </button>
   )
 }

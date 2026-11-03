@@ -147,7 +147,7 @@ function PayoutCalendar() {
                       onMouseLeave={() => setHover(null)}
                       title={`${fmtDate(d)} · AED ${full(v?.due ?? 0)}`}
                       className={`h-[18px] w-[18px] rounded-[4px] ${d === ctx.ref ? 'ring-2 ring-gold-500 ring-offset-1' : ''} ${late ? 'outline-2 outline-bad' : ''}`}
-                      style={{ background: v ? seq(0.12 + 0.88 * (v.due / max)) : d < ctx.ref ? '#f0ede5' : '#f7f5f0' }}
+                      style={{ background: v ? seq(0.12 + 0.88 * (v.due / max)) : d < ctx.ref ? 'var(--color-line)' : 'var(--color-line-2)' }}
                     />
                   )
                 })}

@@ -84,7 +84,7 @@ export default function VizChart({ spec, height = 280 }: { spec: VizSpec; height
                 <Pie data={p.totals} dataKey="value" nameKey="label" innerRadius="58%" outerRadius="88%" paddingAngle={1.5} stroke="#fff" strokeWidth={2}>
                   {p.totals.map((t) => <Cell key={t.key} fill={t.color} />)}
                 </Pie>
-                <Tooltip content={({ active, payload }) => active && payload?.length ? <div className="rounded-xl border border-line bg-white px-3 py-2 text-xs shadow-lg"><b>{payload[0].name}</b><div className="num">{p.unit === 'count' ? full(Number(payload[0].value)) : `AED ${full(Number(payload[0].value))}`} · {((Number(payload[0].value) / p.grand) * 100).toFixed(1)}%</div></div> : null} />
+                <Tooltip content={({ active, payload }) => active && payload?.length ? <div className="rounded-xl border border-line bg-surface px-3 py-2 text-xs shadow-lg"><b>{payload[0].name}</b><div className="num">{p.unit === 'count' ? full(Number(payload[0].value)) : `AED ${full(Number(payload[0].value))}`} · {((Number(payload[0].value) / p.grand) * 100).toFixed(1)}%</div></div> : null} />
                 <text x="50%" y="47%" textAnchor="middle" fontSize={11} fill="#6b7486">Total</text>
                 <text x="50%" y="56%" textAnchor="middle" fontSize={17} fontWeight={700} fill="#14213a">{p.unit === 'count' ? full(p.grand) : compact(p.grand, 1)}</text>
               </PieChart>
@@ -105,7 +105,7 @@ export default function VizChart({ spec, height = 280 }: { spec: VizSpec; height
         <div style={{ height }}>
           <ResponsiveContainer>
             <Treemap data={p.totals.map((t) => ({ name: t.label, size: Math.max(0, t.value), color: t.color }))} dataKey="size" isAnimationActive={false} content={<Tile />}>
-              <Tooltip content={({ active, payload }) => active && payload?.length ? <div className="rounded-xl border border-line bg-white px-3 py-2 text-xs shadow-lg"><b>{payload[0].payload.name}</b><div className="num">{fmt(Number(payload[0].value))}</div></div> : null} />
+              <Tooltip content={({ active, payload }) => active && payload?.length ? <div className="rounded-xl border border-line bg-surface px-3 py-2 text-xs shadow-lg"><b>{payload[0].payload.name}</b><div className="num">{fmt(Number(payload[0].value))}</div></div> : null} />
             </Treemap>
           </ResponsiveContainer>
         </div>

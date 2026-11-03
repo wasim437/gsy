@@ -16,13 +16,13 @@ export default function Statement() {
   const curs = [...new Set(s.contracts.map((c) => c.currency))]
 
   return (
-    <div className="min-h-screen bg-page py-6 print:bg-white print:py-0">
+    <div className="min-h-screen bg-page py-6 print:bg-surface print:py-0">
       <div className="no-print mx-auto mb-4 flex max-w-[820px] items-center justify-between px-4">
         <Link to={`/investors/${id}`} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink"><ArrowLeft size={15} /> Back to portfolio</Link>
         <button onClick={() => window.print()} className="inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800"><Printer size={15} /> Print / Save as PDF</button>
       </div>
 
-      <article className="mx-auto max-w-[820px] bg-white px-10 py-10 text-[13px] text-ink shadow-sm print:max-w-none print:px-0 print:py-0 print:shadow-none">
+      <article className="mx-auto max-w-[820px] bg-surface px-10 py-10 text-[13px] text-ink shadow-sm print:max-w-none print:px-0 print:py-0 print:shadow-none">
         <header className="flex items-start justify-between border-b-2 border-gold-500 pb-5">
           <div className="flex items-center gap-3">
             <img src="/gsy-logo.webp" alt="GSY" className="h-14 w-14" />

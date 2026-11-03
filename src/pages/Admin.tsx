@@ -1,9 +1,10 @@
-import { Check, Crown, History, KeyRound, Minus, Pencil, Plus, Power, ShieldCheck, Trash2, UserPlus, Users, X } from 'lucide-react'
+import { Check, Copy, Crown, History, KeyRound, Mail, MessageCircle, Minus, Pencil, Plus, Power, Send, ShieldCheck, Trash2, UserPlus, Users, X } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Badge, Btn, Card, Kpi, PageHeader, TableWrap } from '../components/ui'
 import { ALL_PERMISSIONS, CHAIRMAN, PERMISSIONS, can, useStore, type Permission, type RoleDef, type User } from '../data/store'
 import type { CountryCode } from '../data/types'
 import { fmtDate } from '../lib/dates'
+import { ADMIN_URL, DASHBOARD_URL, isLocal } from '../lib/site'
 
 const uid = (p: string) => `${p}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`
 const today = () => new Date().toISOString().slice(0, 10)
@@ -22,6 +23,7 @@ export default function Admin() {
   const [editUser, setEditUser] = useState<User | null>(null)
   const [editRole, setEditRole] = useState<RoleDef | null>(null)
   const [msg, setMsg] = useState('')
+  const [invited, setInvited] = useState<User | null>(null)
   if (!can(user, 'manageUsers')) return <Card><p className="text-sm text-muted">You don’t have access to user management.</p></Card>
 
   const newRole = (seed?: (typeof ROLE_IDEAS)[number]): RoleDef => ({
@@ -133,6 +135,7 @@ export default function Admin() {
                     <td><Badge tone={u.status === 'Active' ? 'good' : u.status === 'Pending' ? 'warn' : u.status === 'Invited' ? 'info' : 'neutral'}>{u.status === 'Pending' ? 'Waiting for approval' : u.status === 'Invited' ? 'Invited · not signed up yet' : u.status}</Badge></td>
                     <td className="r">
                       <div className="inline-flex gap-1">
+                        {u.status === 'Invited' && <IconBtn title="Send the invite link" onClick={() => setInvited(u)}><Send size={14} /></IconBtn>}
                         <IconBtn title="Edit" onClick={() => setEditUser(u)}><Pencil size={14} /></IconBtn>
                         {!chair && <IconBtn title={u.status === 'Active' ? 'Disable' : 'Enable'} onClick={() => upsertUser({ ...u, status: u.status === 'Active' ? 'Disabled' : 'Active' })}><Power size={14} /></IconBtn>}
                         {!chair && <IconBtn title="Remove" danger onClick={() => { if (confirm(`Remove ${u.name}?`)) removeUser(u.id) }}><Trash2 size={14} /></IconBtn>}
@@ -177,7 +180,8 @@ export default function Admin() {
       </div>
 
       {editRole && <RoleForm initial={editRole} roles={roles} onClose={() => setEditRole(null)} onSave={(r) => { upsertRole(r); setEditRole(null); setMsg('') }} />}
-      {editUser && <UserForm initial={editUser} roles={roles} existing={users} onClose={() => setEditUser(null)} onSave={(u) => { upsertUser(u); setEditUser(null) }} />}
+      {editUser && <UserForm initial={editUser} roles={roles} existing={users} onClose={() => setEditUser(null)} onSave={(u) => { const isNew = !users.some((x) => x.id === u.id); upsertUser(u); setEditUser(null); if (isNew) setInvited(u) }} />}
+      {invited && <InviteCard u={invited} onClose={() => setInvited(null)} />}
     </div>
   )
 }
@@ -191,7 +195,7 @@ function IconBtn({ children, title, onClick, danger }: { children: ReactNode; ti
 function Modal({ title, children, footer, onClose }: { title: string; children: ReactNode; footer: ReactNode; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-navy-950/50 sm:items-center sm:p-4" onClick={onClose}>
-      <div className="flex max-h-[94dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="flex max-h-[94dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-surface shadow-2xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <div className="font-semibold">{title}</div>
           <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-gold-50" aria-label="Close"><X size={18} /></button>
@@ -339,5 +343,45 @@ function UserForm({ initial, roles, existing, onClose, onSave }: { initial: User
       </div>
       {err && <p className="text-sm text-bad">{err}</p>}
     </Modal>
+  )
+}
+
+/** After adding someone: the message to send them, ready to copy or share on WhatsApp / email. */
+function InviteCard({ u, onClose }: { u: User; onClose: () => void }) {
+  const [copied, setCopied] = useState(false)
+  const base = isLocal ? location.origin : DASHBOARD_URL
+  const link = `${base}/login?invite=${encodeURIComponent(u.email)}`
+  const enters = u.permissions.includes('uploadData') || u.permissions.includes('manageUsers')
+  const text = [
+    `Hello ${u.name.split(' ')[0] || ''},`.replace(' ,', ','),
+    '',
+    `You now have access to the GSY Investor Monitor as ${u.role}.`,
+    `1. Open this link and create your account with ${u.email}:`,
+    link,
+    '2. Choose a password (at least 8 characters) and confirm your email.',
+    ...(enters ? ['', `For data entry, sign in to the Admin Portal with the same email and password:`, isLocal ? `${location.origin}/portal` : ADMIN_URL] : []),
+  ].join('\n')
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch { /* clipboard blocked: the text is selectable */ }
+  }
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-navy-950/50 px-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl bg-surface p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="text-[0.6875rem] font-semibold tracking-wider text-gold-600 uppercase">Invite ready</div>
+            <div className="font-semibold">Send this to {u.name || u.email}</div>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1 text-muted hover:bg-gold-50" aria-label="Close"><X size={18} /></button>
+        </div>
+        <p className="mt-1 text-xs text-muted">{u.email} can now create an account. Until then they show as “Invited”.</p>
+        <textarea readOnly value={text} rows={enters ? 10 : 7} className="input mt-3 h-auto py-2 text-xs leading-relaxed" onFocus={(e) => e.currentTarget.select()} />
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <button onClick={() => void copy()} className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-navy-900 px-3 py-2 text-xs font-semibold text-white hover:bg-navy-800"><Copy size={14} /> {copied ? 'Copied' : 'Copy'}</button>
+          <a href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#1f9e57] px-3 py-2 text-xs font-semibold text-white hover:opacity-90"><MessageCircle size={14} /> WhatsApp</a>
+          <a href={`mailto:${encodeURIComponent(u.email)}?subject=${encodeURIComponent('Your access to the GSY Investor Monitor')}&body=${encodeURIComponent(text)}`} className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-line px-3 py-2 text-xs font-semibold hover:bg-gold-50"><Mail size={14} /> Email</a>
+        </div>
+      </div>
+    </div>
   )
 }

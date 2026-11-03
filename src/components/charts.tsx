@@ -2,7 +2,8 @@ import type { ReactNode } from 'react'
 import { compact, full } from '../lib/format'
 
 // Categorical order is fixed: an entity keeps its color on every chart.
-export const C = {
+// Each mode has its own validated steps (dataviz validate_palette: light on #ffffff, dark on #131c2e).
+const LIGHT = {
   c1: '#2f5ba8', // navy-blue
   c2: '#b8862a', // gold
   c3: '#14998a', // teal
@@ -15,10 +16,16 @@ export const C = {
   warn: '#b45309',
   muted: '#c9c3b5',
 }
+const DARK: typeof LIGHT = {
+  c1: '#5b8ae0', c2: '#b88a32', c3: '#1a9d8d', c4: '#d2654d', c5: '#9474d4',
+  grid: '#232e45', axis: '#8b95a9', good: '#3fb871', bad: '#ef6b6b', warn: '#e39a43', muted: '#4a556c',
+}
+export const C = { ...LIGHT }
 export const SERIES = [C.c1, C.c2, C.c3, C.c4, C.c5]
 
 /** Stable color per known entity, so filters never repaint survivors. */
-export const ENTITY_COLOR: Record<string, string> = {
+export const ENTITY_COLOR: Record<string, string> = {}
+const entityColors = () => ({
   AE: C.c1, IN: C.c2, MY: C.c3,
   UAE: C.c1, India: C.c2, Malaysia: C.c3,
   C01: C.c1, C02: C.c2,
@@ -26,9 +33,20 @@ export const ENTITY_COLOR: Record<string, string> = {
   AED: C.c1, USD: C.c2, INR: C.c3, MYR: C.c4, SGD: C.c5,
   S01: C.c1, S02: C.c2, S03: C.c3, S04: C.c4,
   Salary: C.c1, Rent: C.c2, Marketing: C.c3, Other: C.c5,
-}
+})
+Object.assign(ENTITY_COLOR, entityColors())
 
 export const axisTick = { fontSize: 11, fill: C.axis }
+
+/** Light or dark chart colors. The app remounts its pages after a switch, so every chart re-reads these. */
+export const chartTheme = { dark: false }
+export function applyChartTheme(dark: boolean) {
+  chartTheme.dark = dark
+  Object.assign(C, dark ? DARK : LIGHT)
+  SERIES.splice(0, SERIES.length, C.c1, C.c2, C.c3, C.c4, C.c5)
+  Object.assign(ENTITY_COLOR, entityColors())
+  axisTick.fill = C.axis
+}
 export const fmtAxis = (v: number) => compact(v, 0)
 
 export function Legend({ items }: { items: { label: string; color: string; dash?: boolean }[] }) {
