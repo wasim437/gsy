@@ -28,7 +28,7 @@ export default function Pipeline() {
 
   const bySales = ds.salesPeople.map((sp) => ({ key: sp.id, label: sp.name, sub: `${sp.type} · ${open.filter((l) => l.salesId === sp.id).length} open deals`, value: open.filter((l) => l.salesId === sp.id).reduce((a, l) => a + aed(l), 0), color: ENTITY_COLOR[sp.country] })).filter((r) => r.value > 0).sort((a, b) => b.value - a.value)
   const byCountry = ds.countries.map((c) => ({ key: c.code, label: c.name, color: ENTITY_COLOR[c.code], value: open.filter((l) => ctx.salesById.get(l.salesId)?.country === c.code).reduce((a, l) => a + aed(l), 0) }))
-  const bySource = ['Referral', 'Social media', 'Events', 'Freelancer', 'Website'].map((s, i) => ({ key: s, label: s, color: [C.c1, C.c2, C.c3, C.c4, C.c5][i], value: funded.filter((l) => l.source === s).reduce((a, l) => a + aed(l), 0), sub: `${leads.filter((l) => l.source === s).length} leads · ${funded.filter((l) => l.source === s).length} funded` }))
+  const bySource = ['Referral', 'Social media', 'Events', 'Freelancer', 'Website', 'Other'].map((s, i) => ({ key: s, label: s, color: [C.c1, C.c2, C.c3, C.c4, C.c5, '#a3a9b5'][i], value: funded.filter((l) => l.source === s).reduce((a, l) => a + aed(l), 0), sub: `${leads.filter((l) => l.source === s).length} leads · ${funded.filter((l) => l.source === s).length} funded` }))
 
   return (
     <div className="flex flex-col gap-5">

@@ -5,6 +5,7 @@ import Layout from './components/Layout'
 import { can, useStore, type Permission } from './data/store'
 import { ALL_NAV } from './components/Layout'
 import ReportBuilder from './pages/ReportBuilder'
+import Portal from './portal/Portal'
 import Admin from './pages/Admin'
 import Assistant from './pages/Assistant'
 import CashFlow from './pages/CashFlow'
@@ -30,9 +31,10 @@ import SalesPerformance from './pages/analytics/SalesPerformance'
 import StressTest from './pages/analytics/StressTest'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { user } = useStore()
+  const { user, dbMode, authReady, pendingApproval } = useStore()
   const loc = useLocation()
-  if (!user) return <Navigate to="/login" state={{ from: loc.pathname }} replace />
+  if (dbMode && !authReady) return <div className="grid min-h-screen place-items-center text-sm text-muted">Loading…</div>
+  if (!user || pendingApproval) return <Navigate to="/login" state={{ from: loc.pathname }} replace />
   // Page-level permission: match the nav item that owns this path.
   const item = [...ALL_NAV].sort((a, b) => b.to.length - a.to.length).find((n) => n.to !== '/' && loc.pathname.startsWith(n.to))
   const need: Permission = loc.pathname.startsWith('/statement') ? 'downloadStatements' : item?.perm ?? 'viewDashboards'
@@ -61,6 +63,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/statement/:id" element={<RequireAuth><Statement /></RequireAuth>} />
+      <Route path="/portal/:section?" element={<RequireAuth><Portal /></RequireAuth>} />
       <Route element={<RequireAuth><Layout /></RequireAuth>}>
         <Route index element={<Home />} />
         <Route path="cash" element={<CashFlow />} />

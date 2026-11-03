@@ -5,6 +5,7 @@
 
 import * as XLSX from 'xlsx'
 import { addMonths } from '../lib/dates'
+import { qkey } from './companyInfo'
 import type {
   BankBalance, CommissionPaid, Company, Contract, Country, CountryCode, Currency, Dataset, Expense, ExpenseCategory, FxRate,
   InternalInvestment, Investor, Lead, PayoutPaid, PipelineStage, Product, SalesPerson, SyncSource,
@@ -32,9 +33,13 @@ export interface ImportResult {
   settings: ImportSettings
   fileName: string
   importedAt: string
+  /** Accepted rows with every Excel column (normalised headings), for saving into the database. */
+  sheets: { investors: Row[]; contracts: Row[]; expenses: Row[]; leads: Row[] }
+  /** Company Info answers, keyed by question. */
+  answers: Record<string, string>
 }
 
-type Row = Record<string, unknown>
+export type Row = Record<string, unknown>
 
 const COUNTRY_BY_NAME: Record<string, CountryCode> = { uae: 'AE', 'united arab emirates': 'AE', india: 'IN', malaysia: 'MY' }
 const COUNTRIES: Country[] = [
@@ -188,6 +193,7 @@ export async function importWorkbook(file: File, today: string): Promise<ImportR
   const findCompany = matcher(companies, 'Company', 'Setup → Companies')
 
   // ------------------------------------------------------------ Investors (merge repeated rows)
+  const accepted: ImportResult['sheets'] = { investors: [], contracts: [], expenses: [], leads: [] }
   const invRows = realRows(readBlock(sheet('1 Investors')))
   const investors: Investor[] = []
   let repeats = 0
@@ -195,6 +201,7 @@ export async function importWorkbook(file: File, today: string): Promise<ImportR
     const id = text(r.investorid)
     if (!id) { add('error', '1 Investors', `A row for “${text(r.fullname) || 'unknown'}” has no Investor ID and was left out.`); continue }
     if (investors.some((x) => x.id === id)) { repeats++; continue }
+    accepted.investors.push(r)
     const sales = findSales(r.salesperson)
     const kyc = text(r.kycstatus)
     investors.push({
@@ -223,6 +230,7 @@ export async function importWorkbook(file: File, today: string): Promise<ImportR
     }
     if (contracts.some((c) => c.id === id)) { add('error', '2 Investments', `Contract No ${id} is used twice; the second row was left out.`); continue }
     if (!investors.some((i) => i.id === investorId)) add('error', '2 Investments', `Contract ${id}: Investor ID ${investorId} is not in sheet 1.`)
+    accepted.contracts.push(r)
     const product = products.find((p) => p.id === productId)!
     const tenure = num(r.specialmonths) ?? product.tenureMonths
     const end = addMonths(start, tenure)
@@ -277,6 +285,7 @@ export async function importWorkbook(file: File, today: string): Promise<ImportR
     const amount = num(r.amount)
     if (!date || !amount) { add('error', '5 Expenses', `Expense row ${i + 1} is missing Date or Amount and was left out.`); continue }
     const t = text(r.expensetype)
+    accepted.expenses.push(r)
     expenses.push({
       id: `EX-${i + 1}`, date, companyId: findCompany(r.company) ?? '', country: COUNTRY_BY_NAME[text(r.country).toLowerCase()] ?? 'AE',
       category: (['Salary', 'Rent', 'Marketing'].find((c) => c.toLowerCase() === t.toLowerCase()) ?? 'Other') as ExpenseCategory,
@@ -311,12 +320,13 @@ export async function importWorkbook(file: File, today: string): Promise<ImportR
     const last = isoDate(r.lastcontactdate)
     if (!last) add('info', '7 Sales Leads', `Lead “${name}” has no Last Contact Date; Date Added is used.`)
     const src = text(r.leadsource)
+    accepted.leads.push(r)
     leads.push({
       id: `LD-${i + 1}`, name, createdDate: created, salesId: findSales(r.salesperson) ?? '',
       stage: STAGE.find(([re]) => re.test(text(r.stage)))![1], expectedAmount: num(r.expectedamount),
       currency: (text(r.currency).toUpperCase() as Currency) || 'AED', productId: findProduct(r.product) ?? products[0]?.id ?? '',
       lastActivityDate: last ?? created, nextAction: text(r.nextstep) || '—',
-      source: (/refer/i.test(src) ? 'Referral' : /social/i.test(src) ? 'Social media' : /event/i.test(src) ? 'Events' : /free/i.test(src) ? 'Freelancer' : 'Website') as Lead['source'],
+      source: (/refer/i.test(src) ? 'Referral' : /social/i.test(src) ? 'Social media' : /event/i.test(src) ? 'Events' : /free/i.test(src) ? 'Freelancer' : /web/i.test(src) ? 'Website' : 'Other') as Lead['source'],
     })
   }
 
@@ -331,6 +341,12 @@ export async function importWorkbook(file: File, today: string): Promise<ImportR
   const info = readBlock(sheet('Company Info'))
   const answer = (re: RegExp) => info.find((r) => re.test(text(r.question)))?.answer
   const answered = info.filter((r) => text(r.answer)).length
+  const answers: Record<string, string> = {}
+  for (const r of info) {
+    const a = r.answer
+    if (a === null || a === undefined || text(a) === '') continue
+    answers[qkey(text(r.question))] = /month|checked/i.test(text(r.question)) && typeof a === 'number' ? isoDate(a) ?? text(a) : text(a)
+  }
   const settings: ImportSettings = {
     overdueDays: num(answer(/overdue/i)) ?? undefined,
     cashCoverWarning: num(answer(/cash covers/i)) ?? undefined,
@@ -374,7 +390,7 @@ export async function importWorkbook(file: File, today: string): Promise<ImportR
     table, source: `${file.name} › ${sh}`, lastSync: importedAt, rows: n, status: status(n, errIn(sh)),
     note: issues.filter((i) => i.sheet.startsWith(sh) && i.level !== 'info').map((i) => i.message).join(' ') || '',
   }))
-  return { ds, issues, counts, settings, fileName: file.name, importedAt }
+  return { ds, issues, counts, settings, fileName: file.name, importedAt, sheets: accepted, answers }
 }
 
 // Names from the template's own example rows, used to spot setup rows nobody replaced.

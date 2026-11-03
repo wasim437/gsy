@@ -130,7 +130,7 @@ export default function Admin() {
                     <td><span className="num">{chair ? 'All' : `${u.permissions.length} of ${PERMISSIONS.length}`}</span></td>
                     <td>{u.twoStep ? <Badge tone="good">On</Badge> : <Badge tone="bad">Off</Badge>}</td>
                     <td className="text-muted">{u.lastSignIn ? fmtDate(u.lastSignIn.slice(0, 10)) : 'Never'}</td>
-                    <td><Badge tone={u.status === 'Active' ? 'good' : 'neutral'}>{u.status}</Badge></td>
+                    <td><Badge tone={u.status === 'Active' ? 'good' : u.status === 'Pending' ? 'warn' : u.status === 'Invited' ? 'info' : 'neutral'}>{u.status === 'Pending' ? 'Waiting for approval' : u.status === 'Invited' ? 'Invited · not signed up yet' : u.status}</Badge></td>
                     <td className="r">
                       <div className="inline-flex gap-1">
                         <IconBtn title="Edit" onClick={() => setEditUser(u)}><Pencil size={14} /></IconBtn>
@@ -284,7 +284,7 @@ function RoleForm({ initial, roles, onClose, onSave }: { initial: RoleDef; roles
 // ---------------------------------------------------------------- person form
 
 function UserForm({ initial, roles, existing, onClose, onSave }: { initial: User; roles: RoleDef[]; existing: User[]; onClose: () => void; onSave: (u: User) => void }) {
-  const [u, setU] = useState<User>(initial)
+  const [u, setU] = useState<User>(() => (initial.status === 'Pending' ? { ...initial, status: 'Active' } : initial))
   const [err, setErr] = useState('')
   const chair = u.role === CHAIRMAN
   const isNew = !existing.some((x) => x.id === u.id)
@@ -301,8 +301,8 @@ function UserForm({ initial, roles, existing, onClose, onSave }: { initial: User
       title={isNew ? 'Add a person' : `Edit ${initial.name}`}
       onClose={onClose}
       footer={<>
-        <span className="flex items-center gap-1.5 text-[0.6875rem] text-muted"><ShieldCheck size={13} /> {isNew ? 'They receive a sign-in invite by email (live version).' : 'The change is logged with your name and time.'}</span>
-        <div className="flex gap-2"><Btn variant="ghost" onClick={onClose}>Cancel</Btn><Btn onClick={submit}>{isNew ? 'Add person' : 'Save changes'}</Btn></div>
+        <span className="flex items-center gap-1.5 text-[0.6875rem] text-muted"><ShieldCheck size={13} /> {isNew ? 'They create their account at the sign-in page with this email, and get this access automatically.' : initial.status === 'Pending' ? 'Saving approves this account with the role and access above.' : 'The change is logged with your name and time.'}</span>
+        <div className="flex gap-2"><Btn variant="ghost" onClick={onClose}>Cancel</Btn><Btn onClick={submit}>{isNew ? 'Invite person' : initial.status === 'Pending' ? 'Approve' : 'Save changes'}</Btn></div>
       </>}
     >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

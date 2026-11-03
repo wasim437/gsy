@@ -1,9 +1,129 @@
-import { KeyRound, Lock, Mail, ShieldCheck, Smartphone } from 'lucide-react'
+import { KeyRound, Loader2, Lock, Mail, ShieldCheck, Smartphone, UserRound } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useStore, type User } from '../data/store'
 
 export default function Login() {
+  const { dbMode } = useStore()
+  return dbMode ? <DbLogin /> : <DemoLogin />
+}
+
+/** Real sign-in against GSY's Supabase accounts. */
+function DbLogin() {
+  const { user, pendingApproval, sessionEmail, signOut, authReady } = useStore()
+  const loc = useLocation() as { state?: { from?: string } }
+  const [mode, setMode] = useState<'signin' | 'signup' | 'reset'>('signin')
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
+  if (user) return <Navigate to={loc.state?.from ?? '/'} replace />
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    setBusy(true)
+    setMsg(null)
+    try {
+      if (mode === 'signin') {
+        const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+        if (error) throw error
+      } else if (mode === 'signup') {
+        if (password.length < 8) throw new Error('Use at least 8 characters for the password.')
+        const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { data: { full_name: name.trim() }, emailRedirectTo: window.location.origin } })
+        if (error) throw error
+        setMsg({ ok: true, text: data.session ? 'Account created.' : 'Account created. Check your email to confirm it, then sign in.' })
+      } else {
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: window.location.origin + '/login' })
+        if (error) throw error
+        setMsg({ ok: true, text: 'If this email has an account, a reset link is on its way.' })
+      }
+    } catch (err) {
+      const t = (err as Error).message
+      setMsg({ ok: false, text: /invalid login/i.test(t) ? 'Email or password is not correct.' : /not confirmed/i.test(t) ? 'Please confirm your email first (check your inbox).' : t })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Shell>
+      {pendingApproval ? (
+        <div className="mt-6 rounded-2xl border border-gold-500/40 bg-gold-50 p-5 text-sm">
+          <div className="font-semibold">Waiting for approval</div>
+          <p className="mt-1 text-ink-2">{sessionEmail} is signed in, but the Chairman has not given this account access yet. Please ask the Chairman to approve it in Users &amp; Access.</p>
+          <button onClick={signOut} className="mt-4 text-sm font-medium text-gold-600 hover:underline">Sign out</button>
+        </div>
+      ) : !authReady ? (
+        <div className="mt-10 flex justify-center"><Loader2 className="animate-spin text-gold-600" /></div>
+      ) : (
+        <>
+          <h2 className="text-xl font-semibold">{mode === 'signin' ? 'Sign in' : mode === 'signup' ? 'Create your account' : 'Reset password'}</h2>
+          <p className="mt-1 text-sm text-muted">{mode === 'signup' ? 'Use the email the Chairman invited.' : 'Use your GSY account.'}</p>
+          <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
+            {mode === 'signup' && (
+              <Field icon={<UserRound size={16} />} label="Full name">
+                <input value={name} onChange={(e) => setName(e.target.value)} required autoComplete="name" className="w-full bg-transparent outline-none" />
+              </Field>
+            )}
+            <Field icon={<Mail size={16} />} label="Email">
+              <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required autoComplete="username" className="w-full bg-transparent outline-none" />
+            </Field>
+            {mode !== 'reset' && (
+              <Field icon={<KeyRound size={16} />} label="Password">
+                <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} className="w-full bg-transparent outline-none" />
+              </Field>
+            )}
+            {msg && <p className={`text-sm ${msg.ok ? 'text-good' : 'text-bad'}`}>{msg.text}</p>}
+            <button type="submit" disabled={busy} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-navy-900 font-medium text-white hover:bg-navy-800 disabled:opacity-60">
+              {busy && <Loader2 size={16} className="animate-spin" />}
+              {mode === 'signin' ? 'Sign in' : mode === 'signup' ? 'Create account' : 'Send reset link'}
+            </button>
+          </form>
+          <div className="mt-5 flex flex-wrap justify-between gap-2 text-sm">
+            {mode !== 'signin' ? <button onClick={() => { setMode('signin'); setMsg(null) }} className="text-muted hover:text-ink">← Back to sign in</button> : (
+              <>
+                <button onClick={() => { setMode('signup'); setMsg(null) }} className="font-medium text-gold-600 hover:underline">Invited? Create your account</button>
+                <button onClick={() => { setMode('reset'); setMsg(null) }} className="text-muted hover:text-ink">Forgot password?</button>
+              </>
+            )}
+          </div>
+        </>
+      )}
+      <p className="mt-10 text-center text-[0.6875rem] text-muted">Access is limited to people the Chairman approves. Every sign-in is logged.</p>
+    </Shell>
+  )
+}
+
+function Shell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
+      <div className="relative hidden overflow-hidden bg-navy-900 p-12 text-white lg:flex lg:flex-col">
+        <div className="absolute -top-40 -right-40 h-[520px] w-[520px] rounded-full border-[40px] border-gold-500/10" />
+        <div className="flex items-center gap-3"><img src="/gsy-logo.webp" alt="GSY" className="h-14 w-14 rounded-2xl bg-white/95 p-1" /><div className="text-sm font-semibold tracking-[0.2em] text-gold-400">GSY INVESTMENT GROUP</div></div>
+        <div className="mt-auto max-w-lg">
+          <h1 className="text-4xl leading-tight font-semibold">Know what came in.<br />Know what is due.<br /><span className="text-gold-400">Know what needs attention.</span></h1>
+          <p className="mt-5 text-white/60">Investor receipts, payouts, commissions and daily cash, entered once and available on any device.</p>
+        </div>
+      </div>
+      <div className="flex items-center justify-center px-5 py-10">
+        <div className="w-full max-w-sm">
+          <div className="mb-8 lg:hidden">
+            <img src="/gsy-logo.webp" alt="GSY" className="mb-3 h-16 w-16" />
+            <div className="text-xs font-semibold tracking-[0.2em] text-gold-600">GSY INVESTMENT GROUP</div>
+            <div className="mt-1 text-2xl font-semibold">Investor Monitor</div>
+          </div>
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** Demo sign-in (no database configured). */
+function DemoLogin() {
   const { signIn, users, user } = useStore()
   const active = users.filter((u) => u.status === 'Active')
   const nav = useNavigate()

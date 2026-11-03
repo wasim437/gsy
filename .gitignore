@@ -15,3 +15,6 @@ docs/
 *.xls
 *.csv
 client-data/
+
+# Local-only SQL (contains account emails)
+supabase/*.local.sql

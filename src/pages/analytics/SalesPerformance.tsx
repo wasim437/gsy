@@ -10,7 +10,7 @@ import { OPEN_STAGES } from '../../data/types'
 import { monthLabel } from '../../lib/dates'
 import { compact, full } from '../../lib/format'
 
-const SOURCES = ['Referral', 'Social media', 'Events', 'Freelancer', 'Website'] as const
+const SOURCES = ['Referral', 'Social media', 'Events', 'Freelancer', 'Website', 'Other'] as const
 
 export default function SalesPerformance() {
   const { ctx, ds, filters, today, user, imported } = useStore()
@@ -134,7 +134,7 @@ export default function SalesPerformance() {
               return (
                 <div key={c.code}>
                   <div className="mb-1.5 text-xs font-semibold text-ink-2">{c.name} <span className="font-normal text-muted">· {mine.length} leads</span></div>
-                  <SplitBar parts={SOURCES.map((s, i) => ({ label: s, value: mine.filter((l) => l.source === s).length, color: SERIES[i] }))} />
+                  <SplitBar parts={SOURCES.map((s, i) => ({ label: s, value: mine.filter((l) => l.source === s).length, color: SERIES[i] ?? '#a3a9b5' }))} />
                 </div>
               )
             })}

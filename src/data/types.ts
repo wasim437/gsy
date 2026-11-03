@@ -132,7 +132,7 @@ export interface Lead {
   productId: string
   lastActivityDate: string
   nextAction: string
-  source: 'Referral' | 'Social media' | 'Events' | 'Freelancer' | 'Website'
+  source: 'Referral' | 'Social media' | 'Events' | 'Freelancer' | 'Website' | 'Other'
 }
 
 export interface FxRate {

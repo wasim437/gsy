@@ -44,6 +44,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     { to: '/reminders', label: 'Reminders & Alerts', short: 'Alerts', icon: <Bell size={18} />, perm: 'viewDashboards' },
     { to: '/reports', label: 'Daily Email Reports', icon: <Mail size={18} />, perm: 'viewDashboards' },
     { to: '/assistant', label: 'AI Assistant', short: 'Ask AI', icon: <Sparkles size={18} />, perm: 'useAI' },
+    { to: '/portal', label: 'Admin Portal · Data Entry', icon: <Wand2 size={18} />, perm: 'uploadData' },
     { to: '/data', label: 'Data Sources & Checks', icon: <Database size={18} />, perm: 'reviewData' },
     { to: '/admin', label: 'Users & Access', icon: <ShieldCheck size={18} />, perm: 'manageUsers' },
   ] },
