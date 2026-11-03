@@ -128,7 +128,7 @@ export const SECTIONS: Section[] = [
   },
   // ---------------------------------------------------------------- Records
   {
-    id: 'investors', group: 'Records', title: '1 Investors', table: 'investors', sortBy: 'investor_code',
+    id: 'investors', group: 'Records', title: 'Investors', table: 'investors', sortBy: 'investor_code',
     description: 'One record per investor. The Investor ID never changes.',
     nextCode: { field: 'investor_code', prefix: 'INV-', digits: 4 },
     list: ['investor_code', 'full_name', 'country', 'mobile', 'kyc_status', 'sales_person_id'],
@@ -157,7 +157,7 @@ export const SECTIONS: Section[] = [
     ],
   },
   {
-    id: 'investments', group: 'Records', title: '2 Investments', table: 'contracts', sortBy: 'start_date', sortDesc: true,
+    id: 'investments', group: 'Records', title: 'Investments', table: 'contracts', sortBy: 'start_date', sortDesc: true,
     description: 'One record per investment contract. Payouts, end dates and commissions are worked out from it.',
     nextCode: { field: 'contract_no', prefix: 'CT-', digits: 4 },
     list: ['contract_no', 'investor_id', 'product_id', 'amount', 'currency', 'start_date', 'status'],
@@ -184,7 +184,7 @@ export const SECTIONS: Section[] = [
     ],
   },
   {
-    id: 'payouts', group: 'Records', title: '3 Payouts Paid', table: 'payouts_paid', sortBy: 'payment_date', sortDesc: true,
+    id: 'payouts', group: 'Records', title: 'Payouts Paid', table: 'payouts_paid', sortBy: 'payment_date', sortDesc: true,
     description: 'Every payment GSY makes to an investor (monthly profit, or capital at the end).',
     list: ['payment_date', 'contract_id', 'amount', 'currency', 'payment_for', 'payment_status', 'bank_reference'],
     derive: fromContract,
@@ -201,7 +201,7 @@ export const SECTIONS: Section[] = [
     ],
   },
   {
-    id: 'commissions', group: 'Records', title: '4 Commission Paid', table: 'commissions_paid', sortBy: 'payment_date', sortDesc: true,
+    id: 'commissions', group: 'Records', title: 'Commission Paid', table: 'commissions_paid', sortBy: 'payment_date', sortDesc: true,
     description: 'Every commission payment made to a salesperson.',
     list: ['payment_date', 'sales_person_id', 'contract_id', 'amount', 'currency', 'reference'],
     derive: fromContract,
@@ -216,8 +216,8 @@ export const SECTIONS: Section[] = [
     ],
   },
   {
-    id: 'expenses', group: 'Records', title: '5 Expenses', table: 'expenses', sortBy: 'date', sortDesc: true,
-    description: 'Salaries, rent, marketing and other costs. (Sales commission is entered in 4 Commission Paid.)',
+    id: 'expenses', group: 'Records', title: 'Expenses', table: 'expenses', sortBy: 'date', sortDesc: true,
+    description: 'Salaries, rent, marketing and other costs. (Sales commission is entered in Commission Paid.)',
     list: ['date', 'company_id', 'country', 'expense_type', 'description', 'amount', 'currency'],
     fields: [
       { key: 'date', label: 'Date', type: 'date', required: true },
@@ -231,7 +231,7 @@ export const SECTIONS: Section[] = [
     ],
   },
   {
-    id: 'transfers', group: 'Records', title: '6 Sub-company Transfers', table: 'transfers', sortBy: 'date', sortDesc: true,
+    id: 'transfers', group: 'Records', title: 'Sub-company Transfers', table: 'transfers', sortBy: 'date', sortDesc: true,
     description: 'Group money sent to sub-companies, and money they send back.',
     list: ['date', 'from_company_id', 'to_company_id', 'direction', 'amount', 'currency'],
     fields: [
@@ -246,7 +246,7 @@ export const SECTIONS: Section[] = [
     ],
   },
   {
-    id: 'leads', group: 'Records', title: '7 Sales Leads', table: 'leads', sortBy: 'date_added', sortDesc: true,
+    id: 'leads', group: 'Records', title: 'Sales Leads', table: 'leads', sortBy: 'date_added', sortDesc: true,
     description: 'People who may invest but have not invested yet.',
     list: ['lead_name', 'sales_person_id', 'stage', 'expected_amount', 'last_contact_date', 'next_step'],
     fields: [
@@ -267,7 +267,7 @@ export const SECTIONS: Section[] = [
     ],
   },
   {
-    id: 'bank', group: 'Records', title: '8 Bank Balance', table: 'bank_balances', sortBy: 'date', sortDesc: true,
+    id: 'bank', group: 'Records', title: 'Bank Balance', table: 'bank_balances', sortBy: 'date', sortDesc: true,
     description: 'Closing balance of each GSY bank account (for cash cover).',
     list: ['date', 'bank_name', 'account_name', 'currency', 'balance'],
     fields: [
@@ -280,7 +280,7 @@ export const SECTIONS: Section[] = [
     ],
   },
   {
-    id: 'gifts', group: 'Records', title: '9 Gifts Sent', table: 'gifts', sortBy: 'date', sortDesc: true,
+    id: 'gifts', group: 'Records', title: 'Gifts Sent', table: 'gifts', sortBy: 'date', sortDesc: true,
     description: 'Optional: gifts sent to investors.',
     list: ['date', 'investor_id', 'occasion', 'gift', 'cost_aed', 'sent_by'],
     fields: [

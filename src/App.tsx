@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import Intro from './components/Intro'
 import HumanCheck from './components/HumanCheck'
@@ -8,30 +8,29 @@ import { adminHref, adminSeparate, dashboardHref, isAdminSite } from './lib/site
 import { useTheme } from './lib/theme'
 import { can, useStore, type Permission } from './data/store'
 import { ALL_NAV } from './components/Layout'
-import ReportBuilder from './pages/ReportBuilder'
-import Portal from './portal/Portal'
-import Assistant from './pages/Assistant'
-import CashFlow from './pages/CashFlow'
-import CompanyCommission from './pages/CompanyCommission'
-import Contracts from './pages/Contracts'
-import Countries from './pages/Countries'
-import DataSources from './pages/DataSources'
-import Home from './pages/Home'
-import InternalInvestments from './pages/InternalInvestments'
-import InvestorDetail from './pages/InvestorDetail'
-import Investors from './pages/Investors'
-import Investments from './pages/Investments'
+const ReportBuilder = lazy(() => import('./pages/ReportBuilder'))
+const Portal = lazy(() => import('./portal/Portal'))
+const Assistant = lazy(() => import('./pages/Assistant'))
+const CashFlow = lazy(() => import('./pages/CashFlow'))
+const CompanyCommission = lazy(() => import('./pages/CompanyCommission'))
+const Contracts = lazy(() => import('./pages/Contracts'))
+const Countries = lazy(() => import('./pages/Countries'))
+const Home = lazy(() => import('./pages/Home'))
+const InternalInvestments = lazy(() => import('./pages/InternalInvestments'))
+const InvestorDetail = lazy(() => import('./pages/InvestorDetail'))
+const Investors = lazy(() => import('./pages/Investors'))
+const Investments = lazy(() => import('./pages/Investments'))
 import Login from './pages/Login'
-import Payouts from './pages/Payouts'
-import Pipeline from './pages/Pipeline'
-import Reminders from './pages/Reminders'
-import Reports from './pages/Reports'
-import SalesCommissions from './pages/SalesCommissions'
-import Statement from './pages/Statement'
-import MoneyFlow from './pages/analytics/MoneyFlow'
-import Portfolio from './pages/analytics/Portfolio'
-import SalesPerformance from './pages/analytics/SalesPerformance'
-import StressTest from './pages/analytics/StressTest'
+const Payouts = lazy(() => import('./pages/Payouts'))
+const Pipeline = lazy(() => import('./pages/Pipeline'))
+const Reminders = lazy(() => import('./pages/Reminders'))
+const Reports = lazy(() => import('./pages/Reports'))
+const SalesCommissions = lazy(() => import('./pages/SalesCommissions'))
+const Statement = lazy(() => import('./pages/Statement'))
+const MoneyFlow = lazy(() => import('./pages/analytics/MoneyFlow'))
+const Portfolio = lazy(() => import('./pages/analytics/Portfolio'))
+const SalesPerformance = lazy(() => import('./pages/analytics/SalesPerformance'))
+const StressTest = lazy(() => import('./pages/analytics/StressTest'))
 
 function RequireAuth({ children, admin = false }: { children: React.ReactNode; admin?: boolean }) {
   const { user, dbMode, authReady, pendingApproval } = useStore()
@@ -89,6 +88,14 @@ function ToAdmin() {
   return <div className="grid min-h-screen place-items-center text-sm text-muted">Opening the Admin Portal…</div>
 }
 
+function PageLoading() {
+  return (
+    <div className="grid min-h-[50vh] place-items-center">
+      <span className="h-7 w-7 animate-spin rounded-full border-2 border-gold-500 border-t-transparent" aria-label="Loading" />
+    </div>
+  )
+}
+
 function seenIntro() {
   try { return sessionStorage.getItem('gsy.intro') === '1' } catch { return false }
 }
@@ -106,8 +113,9 @@ export default function App() {
   return (
     <>
     {intro && <Intro onDone={done} />}
-    <UpdateNotice signedIn={!!user} />
+    <UpdateNotice />
     {/* Remount pages when the theme changes so every chart picks up its light or dark colors. */}
+    <Suspense fallback={<PageLoading />}>
     <Routes key={theme}>
       <Route path="/login" element={<Login />} />
       {isAdminSite ? (
@@ -135,7 +143,6 @@ export default function App() {
             <Route path="reminders" element={<Reminders />} />
             <Route path="reports" element={<Reports />} />
             <Route path="assistant" element={<Assistant />} />
-            <Route path="data" element={<DataSources />} />
             <Route path="admin" element={<Navigate to={adminSeparate ? '/portal' : '/portal/users'} replace />} />
             <Route path="builder" element={<ReportBuilder />} />
             <Route path="analytics/flow" element={<MoneyFlow />} />
@@ -147,6 +154,7 @@ export default function App() {
         </>
       )}
     </Routes>
+    </Suspense>
     </>
   )
 }

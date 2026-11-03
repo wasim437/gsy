@@ -83,9 +83,9 @@ export default function ChangesBell() {
         {unread > 0 && <span className="absolute -top-1.5 -right-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-bad px-1 text-[0.625rem] font-bold text-white">{unread > 9 ? '9+' : unread}</span>}
       </button>
       {open && (
-        <div className="absolute top-full right-0 z-50 mt-2 w-[min(92vw,380px)] overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl">
+        <div className="fixed inset-x-3 top-16 z-50 overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl sm:absolute sm:inset-x-auto sm:top-full sm:right-0 sm:mt-2 sm:w-[380px]">
           <div className="border-b border-line px-4 py-3 text-sm font-semibold">Latest changes</div>
-          <ol className="scroll-thin max-h-[60vh] divide-y divide-line-2 overflow-y-auto">
+          <ol className="scroll-thin max-h-[55vh] divide-y divide-line-2 overflow-y-auto">
             {items.length === 0 && <li className="px-4 py-8 text-center text-sm text-muted">No changes yet.</li>}
             {items.map(({ r, title, name, changes }) => (
               <li key={r.id} className="px-4 py-2.5 text-xs">

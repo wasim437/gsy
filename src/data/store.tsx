@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { monthKey, todayISO } from '../lib/dates'
+import { isAdminSite } from '../lib/site'
 import { dbEnabled, supabase } from '../lib/supabase'
 import * as dbApi from './db'
 import { TABLES, type RawTables } from './db'
@@ -205,6 +206,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setProfile(p)
       if (p?.status === 'Active') {
         void supabase.from('profiles').update({ last_sign_in: new Date().toISOString() }).eq('id', uid)
+        // One "signed in" entry per browser session, with the device and the site.
+        try {
+          if (sessionStorage.getItem('gsy.logged') !== uid) {
+            sessionStorage.setItem('gsy.logged', uid)
+            void dbApi.logAction(uid, p.name, `Signed in · ${device()} · ${isAdminSite ? 'Admin Portal' : 'Dashboard'}`)
+          }
+        } catch { /* storage blocked */ }
         await Promise.all([refresh(), refreshPeople(p)])
       }
     })()
@@ -282,7 +290,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       persistUsers(localUsers.map((x) => (x.id === u.id ? { ...x, lastSignIn: new Date().toISOString() } : x)))
     },
     signOut: () => {
-      if (dbEnabled) { void supabase.auth.signOut(); return }
+      if (dbEnabled) {
+        let why = ''
+        try { why = sessionStorage.getItem('gsy.signedOut') ? ' (30 minutes without activity)' : ''; sessionStorage.removeItem('gsy.logged') } catch { /* storage blocked */ }
+        const done = () => void supabase.auth.signOut()
+        if (user) void dbApi.logAction(user.id, user.name, `Signed out${why}`).finally(done)
+        else done()
+        return
+      }
       setSessionId(null)
       try { sessionStorage.removeItem('gsy.session') } catch { /* private mode */ }
     },
@@ -335,4 +350,12 @@ export function useStore(): Store {
   const s = useContext(StoreCtx)
   if (!s) throw new Error('useStore outside StoreProvider')
   return s
+}
+
+/** "iPhone · Safari", "Windows · Chrome"… for the sign-in log. */
+function device() {
+  const ua = navigator.userAgent
+  const os = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS/.test(ua) ? 'Mac' : 'Other device'
+  const br = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'browser'
+  return `${os} · ${br}`
 }

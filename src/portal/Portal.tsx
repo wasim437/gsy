@@ -1,15 +1,15 @@
 import {
-  ArrowUpRight, Building2, CheckCircle2, ChevronRight, ClipboardList, Database, FileSpreadsheet, History as HistoryIcon, LayoutList, Loader2, LogOut, Pencil, Plus,
-  RefreshCw, Search, ShieldCheck, Table2, Trash2, Upload, X, XCircle,
+  ArrowUpRight, ClipboardList, Database, History as HistoryIcon, LayoutList, Loader2, LogOut, Pencil, Plus,
+  RefreshCw, Search, ShieldCheck, Table2, Trash2, X,
 } from 'lucide-react'
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { NavLink, Navigate, useNavigate, useParams } from 'react-router-dom'
+import Toast from '../components/Toast'
 import { ThemeToggle } from '../components/ui'
 import { APP_VERSION } from '../data/changelog'
 import { QUESTIONS, qkey } from '../data/companyInfo'
 import * as db from '../data/db'
 import type { DbRow, RawTables } from '../data/db'
-import type { ImportResult } from '../data/importExcel'
 import { can, useStore } from '../data/store'
 import { dashboardHref, portalPath } from '../lib/site'
 import Admin from '../pages/Admin'
@@ -22,7 +22,7 @@ const EMPTY = Object.fromEntries(db.TABLES.map((t) => [t, []])) as unknown as Ra
 
 export default function Portal() {
   const { section = 'investors' } = useParams()
-  const { user, raw, dbMode, refresh, dataLoading, loadError, signOut, notice } = useStore()
+  const { user, raw, dbMode, refresh, dataLoading, loadError, signOut } = useStore()
   const navigate = useNavigate()
   const data = raw ?? EMPTY
   const groups: { name: string; items: { id: string; title: string; count?: number; icon?: ReactNode }[] }[] = [
@@ -32,10 +32,10 @@ export default function Portal() {
     ] },
     { name: 'Setup', items: SECTIONS.filter((s) => s.group === 'Setup').map((s) => ({ id: s.id, title: s.title, count: data[s.table].length })) },
     { name: 'Records', items: SECTIONS.filter((s) => s.group === 'Records').map((s) => ({ id: s.id, title: s.title, count: data[s.table].length })) },
-    { name: 'Tools', items: [{ id: 'history', title: 'History', icon: <HistoryIcon size={15} /> }, { id: 'import', title: 'Import from Excel', icon: <Upload size={15} /> }] },
+    { name: 'Tools', items: [{ id: 'history', title: 'Activity Log', icon: <HistoryIcon size={15} /> }] },
   ]
   const current = SECTIONS.find((s) => s.id === section)
-  if (!current && !['company-info', 'users', 'import', 'history'].includes(section)) return <Navigate to={portalPath('investors')} replace />
+  if (!current && !['company-info', 'users', 'history'].includes(section)) return <Navigate to={portalPath('investors')} replace />
 
   return (
     <div className="min-h-screen bg-page lg:pl-64">
@@ -88,17 +88,12 @@ export default function Portal() {
       <main className="mx-auto max-w-[1400px] px-4 py-5 sm:px-6">
         {!dbMode && <Banner tone="warn">This app is not connected to GSY’s database, so entries cannot be saved. Add the Supabase settings in .env.local.</Banner>}
         {loadError && <Banner tone="bad">Could not load the database: {loadError}. If the tables are missing, run the setup SQL in Supabase first.</Banner>}
-        {section === 'company-info' ? <CompanyInfo raw={data} /> : section === 'users' ? <Admin /> : section === 'import' ? <ImportToDb /> : section === 'history' ? <History raw={data} /> : (
+        {section === 'company-info' ? <CompanyInfo raw={data} /> : section === 'users' ? <Admin /> : section === 'history' ? <History raw={data} /> : (
           <SectionView key={current!.id} s={current!} raw={data} loading={dataLoading} onRefresh={refresh} />
         )}
       </main>
 
-      {notice && (
-        <div className={`fixed right-4 bottom-4 z-[80] flex max-w-sm items-start gap-2 rounded-xl px-4 py-3 text-sm shadow-xl ${notice.kind === 'ok' ? 'bg-navy-900 text-white' : 'bg-bad text-white'}`}>
-          {notice.kind === 'ok' ? <CheckCircle2 size={17} className="mt-0.5 shrink-0" /> : <XCircle size={17} className="mt-0.5 shrink-0" />}
-          {notice.text}
-        </div>
-      )}
+      <Toast />
     </div>
   )
 }
@@ -363,75 +358,5 @@ function CompanyInfo({ raw }: { raw: RawTables }) {
         </section>
       ))}
     </form>
-  )
-}
-
-// ---------------------------------------------------------------- Excel → database
-
-function ImportToDb() {
-  const { today, notify, refresh, user } = useStore()
-  const [result, setResult] = useState<ImportResult | null>(null)
-  const [busy, setBusy] = useState('')
-  const canEdit = can(user, 'uploadData')
-  const read = async (file?: File | null) => {
-    if (!file) return
-    setBusy('Reading the Excel…')
-    try {
-      const { importWorkbook } = await import('../data/importExcel')
-      setResult(await importWorkbook(file, today))
-    } catch (e) {
-      notify('error', `Could not read this file: ${(e as Error).message}`)
-    } finally {
-      setBusy('')
-    }
-  }
-  const saveAll = async () => {
-    if (!result) return
-    try {
-      await db.importToDatabase(result, (step) => setBusy(`Saving: ${step}…`))
-      await refresh()
-      notify('ok', 'The Excel data is now in the database')
-      setResult(null)
-    } catch (e) {
-      notify('error', (e as Error).message)
-    } finally {
-      setBusy('')
-    }
-  }
-  return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <div className="text-[0.6875rem] font-semibold tracking-wider text-gold-600 uppercase">Tools</div>
-        <h1 className="text-2xl font-semibold text-navy-900">Import from Excel</h1>
-        <p className="mt-0.5 text-sm text-muted">Bring an existing GSY_Data_Entry.xlsx into the database. Records with the same Investor ID, Contract No or bank reference are updated, not duplicated.</p>
-      </div>
-      <label className="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-line bg-surface px-4 py-8 text-center hover:border-gold-500">
-        {busy ? <Loader2 size={26} className="animate-spin text-gold-600" /> : <FileSpreadsheet size={26} className="text-gold-600" />}
-        <span className="text-sm font-semibold">{busy || 'Choose the Excel file'}</span>
-        <input type="file" accept=".xlsx,.xlsm,.xls" className="hidden" onChange={(e) => void read(e.target.files?.[0])} />
-      </label>
-      {result && (
-        <div className="rounded-2xl border border-line bg-surface p-5">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <div className="text-sm"><b>{result.fileName}</b> · ready to save</div>
-            {canEdit && <button onClick={() => void saveAll()} disabled={!!busy} className="inline-flex items-center gap-1.5 rounded-xl bg-navy-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"><Building2 size={15} /> Save into the database</button>}
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-6">
-            {Object.entries(result.counts).map(([k, v]) => (
-              <div key={k} className="rounded-xl bg-page px-3 py-2"><div className="text-[0.6875rem] text-muted">{k}</div><div className="num text-lg font-semibold">{v}</div></div>
-            ))}
-          </div>
-          {result.issues.length > 0 && (
-            <ul className="mt-4 flex flex-col gap-1.5">
-              {result.issues.map((i, n) => (
-                <li key={n} className={`flex items-start gap-2 rounded-xl px-3 py-2 text-sm ${i.level === 'error' ? 'bg-bad-bg' : i.level === 'warning' ? 'bg-warn-bg' : 'bg-page'}`}>
-                  <ChevronRight size={14} className="mt-0.5 shrink-0" /><span><b>{i.sheet}:</b> {i.message}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-    </div>
   )
 }

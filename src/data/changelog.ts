@@ -1,9 +1,17 @@
-// App updates, newest first. Add an entry with every release: it shows under Admin Portal → History,
-// and once to each person after the update reaches them.
+// App updates, newest first. Add an entry with every release: it shows under Admin Portal → Activity Log → App updates.
 
 export interface Release { version: string; date: string; title: string; items: string[] }
 
 export const CHANGELOG: Release[] = [
+  {
+    version: '1.6', date: '2026-11-04', title: 'Phone-friendly, faster, full activity log',
+    items: [
+      'Messages, the changes bell and the update bar fit phone screens.',
+      'Pages load only when opened, so the app starts faster.',
+      'Activity Log for the Chairman: every sign-in (with device), sign-out and change, in one place.',
+      'All data is entered in the Admin Portal; the old Excel import and data-source pages are removed.',
+    ],
+  },
   {
     version: '1.5', date: '2026-11-03', title: 'Separate Admin Portal, dark mode and Excel-style entry',
     items: [
@@ -11,7 +19,7 @@ export const CHANGELOG: Release[] = [
       'Light and dark mode on every page; your choice is remembered on this device.',
       'Sheet view in the Admin Portal: type straight into rows like Excel, paste rows copied from Excel, save all at once.',
       'Secure sign-in on both sites: press and hold to sign in, a 5-minute lock after 5 wrong passwords, and sign-out after 30 minutes without activity.',
-      'History: every change is saved with who made it, when, and the old and new values.',
+      'Activity Log: sign-ins and every change, with who did it, when, and the old and new values.',
       'Invite links for new people, ready to copy or send on WhatsApp.',
       'A “new update” notice appears when a newer version is published.',
     ],

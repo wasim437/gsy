@@ -1,7 +1,5 @@
 import {
-  Activity, Banknote, BadgePercent, Bell, Bookmark, Building2, Check, ChevronDown, Database, FileText, FlaskConical, Globe, Landmark,
-  Layers, LayoutDashboard, LogOut, Mail, Menu, Network, Radar, RotateCcw, Scale, Search, ShieldCheck, SlidersHorizontal, Sparkles,
-  Target, Trash2, Users, Wand2, X,
+  Activity, BadgePercent, Banknote, Bell, Bookmark, Building2, Check, ChevronDown, FileText, FlaskConical, Globe, History, Landmark, Layers, LayoutDashboard, LogOut, Mail, Menu, Network, Radar, RotateCcw, Scale, Search, ShieldCheck, SlidersHorizontal, Sparkles, Target, Trash2, Users, Wand2, X,
 } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
@@ -11,6 +9,7 @@ import { CURRENCIES } from '../data/types'
 import { addMonthKey, fmtDate, monthKey, monthLabel } from '../lib/dates'
 import { adminHref, adminSeparate } from '../lib/site'
 import ChangesBell from './ChangesBell'
+import Toast from './Toast'
 import { SampleBanner, ThemeToggle } from './ui'
 
 export interface NavItem { to: string; label: string; icon: ReactNode; short?: string; perm: Permission }
@@ -47,8 +46,8 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     { to: '/reports', label: 'Daily Email Reports', icon: <Mail size={18} />, perm: 'viewDashboards' },
     { to: '/assistant', label: 'AI Assistant', short: 'Ask AI', icon: <Sparkles size={18} />, perm: 'useAI' },
     { to: '/portal', label: 'Admin Portal · Data Entry', icon: <Wand2 size={18} />, perm: 'uploadData' },
-    { to: '/data', label: 'Data Sources & Checks', icon: <Database size={18} />, perm: 'reviewData' },
     { to: '/portal/users', label: 'Users & Access', icon: <ShieldCheck size={18} />, perm: 'manageUsers' },
+    { to: '/portal/history', label: 'Activity Log', icon: <History size={18} />, perm: 'manageUsers' },
   ] },
 ]
 export const ALL_NAV = NAV.flatMap((g) => g.items)
@@ -380,10 +379,11 @@ export default function Layout() {
       {palette && <CommandPalette onClose={() => setPalette(false)} />}
 
       <header className="no-print sticky top-0 z-20 border-b border-line bg-page/90 backdrop-blur">
-        <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
+        <div className="flex items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-6 sm:py-3">
           <button onClick={() => setDrawer(true)} className="rounded-lg p-1.5 text-ink hover:bg-gold-50 lg:hidden" aria-label="Open menu"><Menu size={20} /></button>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 sm:hidden"><img src="/gsy-logo.webp" alt="" className="h-7 w-7 shrink-0" /><span className="truncate text-sm font-semibold">GSY Monitor</span></div>
+            <div className="hidden flex-wrap items-center gap-2 sm:flex">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-good-bg px-2.5 py-0.5 text-[0.6875rem] font-semibold text-good">
                 <span className="h-1.5 w-1.5 rounded-full bg-good" /> Synced {lastSync.slice(11, 16)} · {fmtDate(today, false)}
               </span>
@@ -397,7 +397,7 @@ export default function Layout() {
           </button>
           <button onClick={() => setPalette(true)} className="rounded-lg p-1.5 sm:hidden" aria-label="Search"><Search size={18} /></button>
           <button onClick={() => setShowFilters((s) => !s)} className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-medium text-ink lg:hidden">
-            <SlidersHorizontal size={14} /> Filters
+            <SlidersHorizontal size={14} /><span className="hidden sm:inline">Filters</span>
           </button>
         </div>
         <div className={`${showFilters ? 'block' : 'hidden'} border-t border-line px-4 pb-3 pt-2.5 sm:px-6 lg:block lg:border-0 lg:pt-0`}>
@@ -410,6 +410,7 @@ export default function Layout() {
         <Outlet />
       </main>
 
+      <Toast aboveTabs />
       <nav className="no-print fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-white/10 bg-sidebar pb-[env(safe-area-inset-bottom)] lg:hidden">
         {MOBILE_TABS.map((to) => {
           const i = ALL_NAV.find((x) => x.to === to)!

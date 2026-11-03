@@ -30,6 +30,7 @@ export default function History({ raw }: { raw: RawTables }) {
   const [q, setQ] = useState('')
   const [who, setWho] = useState('')
   const [what, setWhat] = useState('')
+  const [kind, setKind] = useState<'' | 'data' | 'access'>('')
 
   const load = useCallback(async () => {
     if (!dbMode) { setRows([]); return }
@@ -85,8 +86,9 @@ export default function History({ raw }: { raw: RawTables }) {
   const tables = useMemo(() => [...new Set((rows ?? []).filter((r) => r.table_name).map((r) => r.table_name as string))], [rows])
   const shown = useMemo(() => {
     const term = q.trim().toLowerCase()
-    return (rows ?? []).filter((r) => (!who || r.user_name === who) && (!what || r.table_name === what) && (!term || JSON.stringify([r.user_name, r.action, tableName(r.table_name ?? ''), subject(r), r.details]).toLowerCase().includes(term)))
-  }, [rows, q, who, what]) // eslint-disable-line react-hooks/exhaustive-deps
+    const access = (r: DbRow) => !r.table_name || ['profiles', 'roles', 'invites'].includes(r.table_name)
+    return (rows ?? []).filter((r) => (!who || r.user_name === who) && (!what || r.table_name === what) && (!kind || (kind === 'access') === access(r)) && (!term || JSON.stringify([r.user_name, r.action, tableName(r.table_name ?? ''), subject(r), r.details]).toLowerCase().includes(term)))
+  }, [rows, q, who, what, kind]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const exportCsv = () => {
     const esc = (v: string) => `"${v.replace(/"/g, '""')}"`
@@ -108,8 +110,8 @@ export default function History({ raw }: { raw: RawTables }) {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="text-[0.6875rem] font-semibold tracking-wider text-gold-600 uppercase">Tools</div>
-          <h1 className="text-2xl font-semibold text-navy-900">History</h1>
-          <p className="mt-0.5 text-sm text-muted">Every change saved in the portal: who made it, when, and what it was before and after. Plus the app’s update notes.</p>
+          <h1 className="text-2xl font-semibold text-navy-900">Activity Log</h1>
+          <p className="mt-0.5 text-sm text-muted">Everything that happens: sign-ins, data added, changed or deleted (with the old and new values), users and roles. Plus the app’s update notes.</p>
         </div>
         <div className="flex rounded-xl border border-line bg-surface p-1">
           {(['changes', 'updates'] as const).map((t) => (
@@ -141,6 +143,7 @@ export default function History({ raw }: { raw: RawTables }) {
               <Search size={16} className="text-muted" />
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search names, amounts, fields…" className="w-full bg-transparent text-sm outline-none" />
             </div>
+            <select value={kind} onChange={(e) => setKind(e.target.value as typeof kind)} className="input h-9 w-auto"><option value="">All activity</option><option value="data">Data changes</option><option value="access">Sign-ins &amp; access</option></select>
             <select value={who} onChange={(e) => setWho(e.target.value)} className="input h-9 w-auto"><option value="">Everyone</option>{people.map((p) => <option key={p}>{p}</option>)}</select>
             <select value={what} onChange={(e) => setWhat(e.target.value)} className="input h-9 w-auto"><option value="">All sections</option>{tables.map((t) => <option key={t} value={t}>{tableName(t)}</option>)}</select>
             <button onClick={() => void load()} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line px-3 text-sm hover:bg-gold-50" title="Reload"><RefreshCw size={15} className={busy ? 'animate-spin' : ''} /></button>
@@ -152,7 +155,7 @@ export default function History({ raw }: { raw: RawTables }) {
           {rows === null ? (
             <div className="flex justify-center py-14"><Loader2 className="animate-spin text-gold-600" /></div>
           ) : shown.length === 0 ? (
-            <div className="px-4 py-14 text-center text-sm text-muted">No changes yet. Everything added, changed or deleted in the portal appears here.</div>
+            <div className="px-4 py-14 text-center text-sm text-muted">Nothing yet. Sign-ins and every change in the portal appear here.</div>
           ) : (
             <ol className="scroll-thin max-h-[calc(100vh-280px)] divide-y divide-line-2 overflow-y-auto">
               {shown.map((r) => {

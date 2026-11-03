@@ -38,7 +38,7 @@ export default function Home() {
     ...(k.expiring.length ? [{ tone: 'warn' as const, icon: <CalendarClock size={15} />, text: <><b>{k.expiring.length} contracts mature</b> this month, AED {compact(k.expiringCapital.aed, 2)} capital to return</>, to: '/contracts' }] : []),
     ...(kyc.length ? [{ tone: 'warn' as const, icon: <FileWarning size={15} />, text: <><b>{kyc.length} KYC documents</b> expire within 30 days or have expired</>, to: '/reminders' }] : []),
     ...(stuck.length ? [{ tone: 'neutral' as const, icon: <Users size={15} />, text: <><b>{stuck.length} CRM deals</b> have had no activity for 7+ days</>, to: '/pipeline' }] : []),
-    ...ds.syncLog.filter((s) => s.status !== 'OK').slice(0, 2).map((s) => ({ tone: 'neutral' as const, icon: <FileWarning size={15} />, text: <>{s.table}: {s.note}</>, to: '/data' })),
+    ...ds.syncLog.filter((s) => s.status !== 'OK').slice(0, 2).map((s) => ({ tone: 'neutral' as const, icon: <FileWarning size={15} />, text: <>{s.table.replace(/_/g, ' ')}: {s.note}</>, to: '/portal' })),
   ]
 
   return (

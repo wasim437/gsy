@@ -187,11 +187,12 @@ export function TableWrap({ children, max = 'max-h-[420px]' }: { children: React
 }
 
 export function SampleBanner() {
-  const { imported } = useStore()
+  const { imported, dbMode } = useStore()
+  if (dbMode) return null
   if (imported) {
     const errors = imported.issues.filter((i) => i.level === 'error').length
     return (
-      <Link to="/data">
+      <Link to="/">
         <Badge tone={errors ? 'warn' : 'good'} icon={errors ? <AlertTriangle size={12} /> : <CheckCircle2 size={12} />}>
           GSY data · {imported.fileName.replace(/\.xlsx$/i, '')}{errors ? ` · ${errors} to fix` : ''}
         </Badge>
@@ -199,11 +200,7 @@ export function SampleBanner() {
     )
   }
   return (
-    <Link to="/data">
-      <Badge tone="gold" icon={<Info size={12} />}>
-        Sample data · import GSY Excel
-      </Badge>
-    </Link>
+    <Badge tone="gold" icon={<Info size={12} />}>Preview data</Badge>
   )
 }
 
